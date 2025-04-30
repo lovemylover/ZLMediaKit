@@ -26,6 +26,7 @@
 #include "Rtp/RtpServer.h"
 #include "WebApi.h"
 #include "WebHook.h"
+#include "Record/FileReportClient.h"
 
 #if defined(ENABLE_WEBRTC)
 #include "../webrtc/WebRtcTransport.h"
@@ -396,6 +397,11 @@ int start_main(int argc,char *argv[]) {
         InfoL << "已启动http api 接口";
         installWebHook();
         InfoL << "已启动http hook 接口";
+
+        // Initialize WebSocket client for file reporting
+        g_file_report_client = std::make_shared<WebSocketClient<FileReportClient>>();
+        g_file_report_client->setServerInfo("127.0.0.1", 8080); // Default server address
+        g_file_report_client->startConnect("127.0.0.1", 8080);
 
         try {
             // rtsp服务器，端口默认554  [AUTO-TRANSLATED:07937d81]

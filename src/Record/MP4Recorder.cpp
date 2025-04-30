@@ -17,10 +17,40 @@
 #include "Thread/WorkThreadPool.h"
 #include "MP4Muxer.h"
 
+#include "FileReportClient.h"
+
 using namespace std;
 using namespace toolkit;
 
 namespace mediakit {
+
+// Function to send file information via WebSocket
+void sendFileInfoViaWebSocket(const RecordInfo &info) {
+    try {
+        // Create JSON message
+        string json_msg = "{\"type\":\"mp4_record\",\"data\":{";
+        json_msg += "\"app\":\"" + info.app + "\",";
+        json_msg += "\"stream\":\"" + info.stream + "\",";
+        json_msg += "\"file_name\":\"" + info.file_name + "\",";
+        json_msg += "\"file_path\":\"" + info.file_path + "\",";
+        json_msg += "\"url\":\"" + info.url + "\",";
+        json_msg += "\"start_time\":" + to_string(info.start_time) + ",";
+        json_msg += "\"time_len\":" + to_string(info.time_len) + ",";
+        json_msg += "\"file_size\":" + to_string(info.file_size);
+        json_msg += "}}";
+
+        // Send via WebSocket
+        if (g_file_report_client) {
+            auto buffer = std::make_shared<toolkit::BufferString>(json_msg);
+            g_file_report_client->send(buffer);
+            DebugL << "Sent file info via WebSocket: " << json_msg;
+        } else {
+            WarnL << "WebSocket client not initialized";
+        }
+    } catch (const std::exception &ex) {
+        WarnL << "Failed to send file info via WebSocket: " << ex.what();
+    }
+}
 
 MP4Recorder::MP4Recorder(const MediaTuple &tuple, const string &path, size_t max_second) {
     // ///record 业务逻辑//////  [AUTO-TRANSLATED:2e78931a]
@@ -95,6 +125,9 @@ void MP4Recorder::asyncClose() {
             // 临时文件名改成正式文件名，防止mp4未完成时被访问  [AUTO-TRANSLATED:541a6f00]
             // Change the temporary file name to the official file name to prevent access to the mp4 before it is completed
             rename(full_path_tmp.data(), info.file_path.data());
+            
+            // Send file information via WebSocket
+            sendFileInfoViaWebSocket(info);
         }
         TraceL << "Emit mp4 record event: " << info.file_path;
         // 触发mp4录制切片生成事件  [AUTO-TRANSLATED:9959dcd4]
