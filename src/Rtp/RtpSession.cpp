@@ -57,10 +57,12 @@ RtpSession::RtpSession(const Socket::Ptr &sock)
 RtpSession::~RtpSession() = default;
 
 void RtpSession::onRecv(const Buffer::Ptr &data) {
+    // 如果是 UDP 类型 RTP 包，直接丢给 onRtpPacket 接口处理
     if (_is_udp) {
         onRtpPacket(data->data(), data->size());
         return;
     }
+    // 如果是 TCP 类型，丢给 RtpSplitter 处理
     RtpSplitter::input(data->data(), data->size());
 }
 

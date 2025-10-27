@@ -22,7 +22,8 @@ namespace mediakit {
 
 void HttpRequestSplitter::input(const char *data,size_t len) {
     {
-        auto size = remainDataSize();
+        // 获取当前 http 请求缓存数据大小
+        auto size = remainDataSize(); 
         if (size > _max_cache_size) {
             // 缓存太多数据无法处理则上抛异常  [AUTO-TRANSLATED:30e48e9e]
             // If too much data is cached and cannot be processed, throw an exception
@@ -30,10 +31,12 @@ void HttpRequestSplitter::input(const char *data,size_t len) {
             throw std::out_of_range("remain data size is too huge, now cleared:" + to_string(size));
         }
     }
-    const char *ptr = data;
+    const char *ptr = data; // 保存原始数据指针到局部变量
+    // _remain_data是缓存数据，用于处理上次未处理完的数据
+    // 如果缓存数据不为空，则需要把本次数据和缓存数据拼接起来处理
     if(!_remain_data.empty()){
-        _remain_data.append(data,len);
-        data = ptr = _remain_data.data();
+        _remain_data.append(data,len); // 拼接上次未处理完的数据和当前数据
+        data = ptr = _remain_data.data(); // 重新执行缓存数据指针，指向拼接后的数据
         len = _remain_data.size();
     }
 
