@@ -317,9 +317,9 @@ public:
 
     template <typename C = FrameImp>
     static std::shared_ptr<C> create() {
-#if 0
-        static ResourcePool<C> packet_pool;
-        static onceToken token([]() {
+#if 1
+        static toolkit::ResourcePool<C> packet_pool;
+        static toolkit::onceToken token([]() {
             packet_pool.setSize(1024);
         });
         auto ret = packet_pool.obtain2();
