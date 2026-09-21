@@ -1,0 +1,27 @@
+src/Common/MediaSource.cpp
+  s_b4a1e56673b57d::t_5e440d86f5f196 581-583,628-630
+  s_b4a1e56673b57d::t_0e0e4c2ee5e1b9 420-422
+  s_b4a1e56673b57d::t_2d2c85735364f8 11-21
+  s_b4a1e56673b57d::t_eaf55a4377e7fb 42-97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "32fcea99b6e05d66d5ff31a8ec5869e7e731fbc8",
+  "prompts": {},
+  "humans": {
+    "h_34754a200e3cc4": {
+      "author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  },
+  "sessions": {
+    "s_b4a1e56673b57d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f281ccdf-43aa-4938-9d19-9b27dad91d60",
+        "model": "glm-5.3"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
