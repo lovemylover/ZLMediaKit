@@ -711,7 +711,7 @@ public:
      * [AUTO-TRANSLATED:0be3c076]
      */
     FrameWriterInterface* addDelegate(FrameWriterInterface::Ptr delegate) {
-        std::lock_guard<std::recursive_mutex> lck(_mtx);
+        std::lock_guard<std::mutex> lck(_mtx);
         return _delegates.emplace(delegate.get(), std::move(delegate)).first->second.get();
     }
 
@@ -724,7 +724,7 @@ public:
      * [AUTO-TRANSLATED:c2c915aa]
      */
     void delDelegate(FrameWriterInterface *ptr) {
-        std::lock_guard<std::recursive_mutex> lck(_mtx);
+        std::lock_guard<std::mutex> lck(_mtx);
         _delegates.erase(ptr);
     }
 
@@ -739,7 +739,7 @@ public:
         bool ret = false;
         decltype(_delegates) delegates_snap;
         {
-            std::lock_guard<std::recursive_mutex> lck(_mtx);
+            std::lock_guard<std::mutex> lck(_mtx);
             delegates_snap = _delegates;
         }
         for (auto &pr : delegates_snap) {
@@ -757,12 +757,12 @@ public:
      * [AUTO-TRANSLATED:93ebe7ec]
      */
     size_t size() const {
-        std::lock_guard<std::recursive_mutex> lck(_mtx);
+        std::lock_guard<std::mutex> lck(_mtx);
         return _delegates.size();
     }
 
     void clear() {
-        std::lock_guard<std::recursive_mutex> lck(_mtx);
+        std::lock_guard<std::mutex> lck(_mtx);
         _delegates.clear();
     }
 
@@ -826,7 +826,7 @@ private:
     uint64_t _frames = 0;
     uint64_t _video_key_frames = 0;
     Stamp _stamp;
-    mutable std::recursive_mutex _mtx;
+    mutable std::mutex _mtx;
     std::map<void *, FrameWriterInterface::Ptr> _delegates;
 };
 
