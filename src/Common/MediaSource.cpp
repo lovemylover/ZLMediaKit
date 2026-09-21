@@ -8,6 +8,7 @@
  * may be found in the AUTHORS file in the root of the source tree.
  */
 #include <mutex>
+#include <shared_mutex>
 #include "Util/util.h"
 #include "Util/NoticeCenter.h"
 #include "Network/sockutil.h"
@@ -28,7 +29,7 @@ namespace toolkit {
 
 namespace mediakit {
 
-static recursive_mutex s_media_source_mtx;
+static shared_mutex s_media_source_mtx;
 using StreamMap = unordered_map<string/*strema_id*/, weak_ptr<MediaSource> >;
 using AppStreamMap = unordered_map<string/*app*/, StreamMap>;
 using VhostAppStreamMap = unordered_map<string/*vhost*/, AppStreamMap>;
@@ -351,7 +352,7 @@ void MediaSource::for_each_media(const function<void(const Ptr &src)> &cb,
                                  const string &stream) {
     deque<Ptr> src_list;
     {
-        lock_guard<recursive_mutex> lock(s_media_source_mtx);
+        shared_lock<shared_mutex> lock(s_media_source_mtx);
         for_each_media_l(s_media_source_map, src_list, schema, vhost, app, stream);
     }
     for (auto &src : src_list) {
@@ -512,7 +513,7 @@ void MediaSource::regist() {
     {
         // 减小互斥锁临界区  [AUTO-TRANSLATED:1309d309]
         // Reduce mutex lock critical area
-        lock_guard<recursive_mutex> lock(s_media_source_mtx);
+        lock_guard<shared_mutex> lock(s_media_source_mtx);
         auto &ref = s_media_source_map[_schema][_tuple.vhost][_tuple.app][_tuple.stream];
         auto src = ref.lock();
         if (src) {
@@ -559,7 +560,7 @@ bool MediaSource::unregist() {
     {
         // 减小互斥锁临界区  [AUTO-TRANSLATED:1309d309]
         // Reduce mutex lock critical area
-        lock_guard<recursive_mutex> lock(s_media_source_mtx);
+        lock_guard<shared_mutex> lock(s_media_source_mtx);
         erase_media_source(ret, this, s_media_source_map, _schema, _tuple.vhost, _tuple.app, _tuple.stream);
     }
 
