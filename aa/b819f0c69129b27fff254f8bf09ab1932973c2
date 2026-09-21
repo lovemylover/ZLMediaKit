@@ -1,0 +1,21 @@
+src/Common/MultiMediaSourceMuxer.cpp
+  s_60f7fa2914f370::t_0d2b1e77303d9d 104
+  s_60f7fa2914f370::t_95eac8c1171dbb 147-157,165
+  s_60f7fa2914f370::t_7635b8288ecf32 54-55,59,62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "aab819f0c69129b27fff254f8bf09ab1932973c2",
+  "prompts": {},
+  "sessions": {
+    "s_60f7fa2914f370": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2333d378-7712-4af2-b5cb-3752b679df89",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
