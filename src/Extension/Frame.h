@@ -737,8 +737,12 @@ public:
     bool inputFrame(const Frame::Ptr &frame) override {
         doStatistics(frame);
         bool ret = false;
-        std::lock_guard<std::recursive_mutex> lck(_mtx);
-        for (auto &pr : _delegates) {
+        decltype(_delegates) delegates_snap;
+        {
+            std::lock_guard<std::recursive_mutex> lck(_mtx);
+            delegates_snap = _delegates;
+        }
+        for (auto &pr : delegates_snap) {
             if (pr.second->inputFrame(frame)) {
                 ret = true;
             }
