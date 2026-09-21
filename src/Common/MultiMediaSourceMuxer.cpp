@@ -51,22 +51,15 @@ public:
         : _paced_sender_ms(paced_sender_ms), _cb(std::move(cb)) {}
 
     void resetTimer(const EventPoller::Ptr &poller) {
-        std::lock_guard<std::recursive_mutex> lck(_mtx);
-        std::weak_ptr<FramePacedSender> weak_self = shared_from_this();
-        _timer = std::make_shared<Timer>(_paced_sender_ms / 1000.0f, [weak_self]() {
-            if (auto strong_self = weak_self.lock()) {
-                strong_self->onTick();
-                return true;
-            }
-            return false;
-        }, poller);
+        std::lock_guard<std::mutex> lck(_mtx);
+        resetTimer_l(poller);
     }
 
     bool inputFrame(const Frame::Ptr &frame) override {
-        std::lock_guard<std::recursive_mutex> lck(_mtx);
+        std::lock_guard<std::mutex> lck(_mtx);
         if (!_timer) {
             setCurrentStamp(frame->dts());
-            resetTimer(EventPoller::getCurrentPoller());
+            resetTimer_l(EventPoller::getCurrentPoller());
         }
         auto &last_dts = _last_dts[frame->getTrackType()];
         if (last_dts > frame->dts()) {
@@ -108,7 +101,7 @@ private:
     }
 
     void onTick() {
-        std::lock_guard<std::recursive_mutex> lck(_mtx);
+        std::lock_guard<std::mutex> lck(_mtx);
 
         uint64_t wall_ms = _ticker.elapsedTime();
         _ticker.resetTime();
@@ -151,6 +144,17 @@ private:
         _ticker.resetTime();
     }
 
+    void resetTimer_l(const EventPoller::Ptr &poller) {
+        std::weak_ptr<FramePacedSender> weak_self = shared_from_this();
+        _timer = std::make_shared<Timer>(_paced_sender_ms / 1000.0f, [weak_self]() {
+            if (auto strong_self = weak_self.lock()) {
+                strong_self->onTick();
+                return true;
+            }
+            return false;
+        }, poller);
+    }
+
 private:
     uint32_t _paced_sender_ms;
     uint64_t _virtual_pos = 0;
@@ -158,7 +162,7 @@ private:
     OnFrame _cb;
     Ticker _ticker;
     Timer::Ptr _timer;
-    std::recursive_mutex _mtx;
+    std::mutex _mtx;
     std::multimap<uint64_t, Frame::Ptr> _cache;
 };
 
