@@ -1,0 +1,20 @@
+src/Extension/Frame.h
+  s_5bb8b6e983ab87::t_18dd2000ce736b 829
+  s_5bb8b6e983ab87::t_4b45496ac29117 714,727,742,760,765
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "9aaf65f80308a2bf0ba04b26e943de2f87951983",
+  "prompts": {},
+  "sessions": {
+    "s_5bb8b6e983ab87": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c5758eae-f9a1-40ad-8771-cbc5b427fee8",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
