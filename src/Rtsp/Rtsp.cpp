@@ -17,6 +17,7 @@
 #include "Common/config.h"
 #include "Extension/Track.h"
 #include "Extension/Factory.h"
+#include "Util/onceToken.h"
 
 using namespace std;
 using namespace toolkit;
@@ -700,7 +701,7 @@ size_t RtpPacket::getPayloadSize() const {
 }
 
 RtpPacket::Ptr RtpPacket::create() {
-#if 0
+#if 1
     static ResourcePool<RtpPacket> packet_pool;
     static onceToken token([]() {
         packet_pool.setSize(1024);
