@@ -1,0 +1,26 @@
+CMakeLists.txt
+  s_421e9d94b10149::t_e54ea71aa0f22a 32-33
+  s_421e9d94b10149::t_4f99c71f48b8f3 34
+src/Common/MediaSource.cpp
+  s_421e9d94b10149::t_b7ca57d659a31c 563
+  s_421e9d94b10149::t_90b9d673f8fe7a 11
+  s_421e9d94b10149::t_7450e14b058630 355
+  s_421e9d94b10149::t_711774adb4563f 516
+  s_421e9d94b10149::t_6bd8dd96f02826 32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "f6a8fd14bf7f769d50f4ce18cddb99c2d96951ea",
+  "prompts": {},
+  "sessions": {
+    "s_421e9d94b10149": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "57fad11d-1c84-4a16-bbb4-602255131bf2",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
