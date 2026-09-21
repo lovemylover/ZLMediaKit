@@ -1,0 +1,29 @@
+src/Extension/Frame.h
+  s_b4a1e56673b57d::t_f52634c4548587 715-725
+  s_b4a1e56673b57d::t_724d3b7c526cb4 755
+  s_b4a1e56673b57d::t_a967eeaec0dae3 840-841
+  s_b4a1e56673b57d::t_d6f48c8639fb23 16
+  s_b4a1e56673b57d::t_c034ff94d5a921 737-743
+  s_b4a1e56673b57d::t_be349baf845395 771,776
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "f620aac7797f91cea432491d9bcbf4baae4635ce",
+  "prompts": {},
+  "humans": {
+    "h_34754a200e3cc4": {
+      "author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  },
+  "sessions": {
+    "s_b4a1e56673b57d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f281ccdf-43aa-4938-9d19-9b27dad91d60",
+        "model": "glm-5.3"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
