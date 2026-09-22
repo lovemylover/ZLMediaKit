@@ -1,0 +1,21 @@
+ext-codec/H264.cpp
+  s_d2fbd7e4f688eb::t_ea8b3e1c7fbdf2 307-308,313,318,320,322
+  s_d2fbd7e4f688eb::t_099d173f2dbcac 304-306,309-310,312,314-317,326
+  s_d2fbd7e4f688eb::t_eb0e7618e5fdbe 311,319,321,324-325,327
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "d889466f4f0947937efc86c7fd2cdc2c91f72323",
+  "prompts": {},
+  "sessions": {
+    "s_d2fbd7e4f688eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fa8146ec-36e4-4aca-90a6-f1897ed1986e",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
