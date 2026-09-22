@@ -148,6 +148,35 @@ void appendExt(map<uint8_t, RtpExt> &ret, uint8_t *ptr, const uint8_t *end) {
     }
 }
 
+// 与map版本等价的first-wins语义：同一id已存在时忽略后续同id的ext  [AUTO-TRANSLATED:6f3b1c47]
+// Same first-wins semantics as the map version: ignore subsequent ext with the same id if it already exists
+template<typename Type>
+void appendExt(vector<pair<uint8_t, RtpExt>> &ret, uint8_t *ptr, const uint8_t *end) {
+    while (ptr < end) {
+        auto ext = reinterpret_cast<Type *>(ptr);
+        if (ext->getId() == (uint8_t) RtpExtType::padding) {
+            // padding，忽略  [AUTO-TRANSLATED:a7fda608]
+            // padding, ignore
+            ++ptr;
+            continue;
+        }
+        CHECK(reinterpret_cast<uint8_t *>(ext) + Type::kMinSize <= end);
+        CHECK(ext->getData() + ext->getSize() <= end);
+        auto id = ext->getId();
+        bool exist = false;
+        for (auto &pr : ret) {
+            if (pr.first == id) {
+                exist = true;
+                break;
+            }
+        }
+        if (!exist) {
+            ret.emplace_back(id, RtpExt(ext, isOneByteExt<Type>(), reinterpret_cast<char *>(ext->getData()), ext->getSize()));
+        }
+        ptr += Type::kMinSize + ext->getSize();
+    }
+}
+
 RtpExt::RtpExt(void *ext, bool one_byte_ext, const char *str, size_t size) {
     _ext = ext;
     _one_byte_ext = one_byte_ext;
@@ -191,6 +220,36 @@ map<uint8_t/*id*/, RtpExt/*data*/> RtpExt::getExtValue(const RtpHeader *header) 
         return ret;
     }
     return ret;
+}
+
+void RtpExt::getExtValue(const RtpHeader *header, vector<pair<uint8_t, RtpExt>> &ret) {
+    ret.clear();
+    assert(header);
+    auto ext_size = header->getExtSize();
+    if (!ext_size) {
+        return;
+    }
+    auto reserved = header->getExtReserved();
+    auto ptr = const_cast<RtpHeader *>(header)->getExtData();
+    auto end = ptr + ext_size;
+    if (reserved == kOneByteHeader) {
+        appendExt<RtpExtOneByte>(ret, ptr, end);
+    } else if ((reserved & 0xFFF0) == kTwoByteHeader) {
+        appendExt<RtpExtTwoByte>(ret, ptr, end);
+    }
+    // map版本按id升序遍历，这里回填后同样按id升序排序，保证迭代序一致；
+    // ext个数极少(one-byte id上限14)，插入排序足够  [AUTO-TRANSLATED:2a4e8b91]
+    // The map version iterates in ascending id order; after filling, sort in ascending id order to keep the iteration order consistent;
+    // the number of ext is very small (one-byte id upper limit is 14), insertion sort is sufficient
+    for (size_t i = 1; i < ret.size(); ++i) {
+        auto tmp = ret[i];
+        size_t j = i;
+        while (j > 0 && ret[j - 1].first > tmp.first) {
+            ret[j] = ret[j - 1];
+            --j;
+        }
+        ret[j] = tmp;
+    }
 }
 
 #define XX(type, url) {RtpExtType::type , url},
@@ -561,6 +620,9 @@ RtpExt::operator bool() const {
 }
 
 RtpExtContext::RtpExtContext(const RtcMedia &m){
+    // 预分配scratch，避免运行期扩容  [AUTO-TRANSLATED:4d8e2f60]
+    // Pre-allocate scratch to avoid runtime expansion
+    _ext_scratch.reserve(16);
     for (auto &ext : m.extmap) {
         auto ext_type = RtpExt::getExtType(ext.ext);
         _rtp_ext_id_to_type.emplace(ext.id, ext_type);
@@ -581,10 +643,13 @@ void RtpExtContext::setRid(uint32_t ssrc, const string &rid) {
 }
 
 RtpExt RtpExtContext::changeRtpExtId(const RtpHeader *header, bool is_recv, string *rid_ptr, RtpExtType type) {
-    string rid, repaired_rid;
     RtpExt ret;
-    auto ext_map = RtpExt::getExtValue(header);
-    for (auto &pr : ext_map) {
+    // 复用成员scratch，消除每包的map/string堆分配  [AUTO-TRANSLATED:8b0d31ca]
+    // Reuse member scratch to eliminate per-packet map/string heap allocation
+    _rid_scratch.clear();
+    _repaired_rid_scratch.clear();
+    RtpExt::getExtValue(header, _ext_scratch);
+    for (auto &pr : _ext_scratch) {
         if (is_recv) {
             auto it = _rtp_ext_id_to_type.find(pr.first);
             if (it == _rtp_ext_id_to_type.end()) {
@@ -598,8 +663,8 @@ RtpExt RtpExtContext::changeRtpExtId(const RtpHeader *header, bool is_recv, stri
             // Reassign ext id to ext type, as a unified intermediate type for processing ext later
             pr.second.setExtId((uint8_t) it->second);
             switch (it->second) {
-                case RtpExtType::sdes_rtp_stream_id : rid = pr.second.getRtpStreamId(); break;
-                case RtpExtType::sdes_repaired_rtp_stream_id : repaired_rid = pr.second.getRepairedRtpStreamId(); break;
+                case RtpExtType::sdes_rtp_stream_id : _rid_scratch.assign(pr.second.getRtpStreamId()); break;
+                case RtpExtType::sdes_repaired_rtp_stream_id : _repaired_rid_scratch.assign(pr.second.getRepairedRtpStreamId()); break;
                 default : break;
             }
         } else {
@@ -623,25 +688,25 @@ RtpExt RtpExtContext::changeRtpExtId(const RtpHeader *header, bool is_recv, stri
     if (!is_recv) {
         return ret;
     }
-    if (rid.empty()) {
-        rid = repaired_rid;
+    if (_rid_scratch.empty()) {
+        _rid_scratch.assign(_repaired_rid_scratch);
     }
     auto ssrc = ntohl(header->ssrc);
-    if (rid.empty()) {
+    if (_rid_scratch.empty()) {
         // 获取rid  [AUTO-TRANSLATED:8ae4dffa]
         // Get rid
-        rid = _ssrc_to_rid[ssrc];
+        _rid_scratch.assign(_ssrc_to_rid[ssrc]);
     } else {
         // 设置rid  [AUTO-TRANSLATED:5e34819b]
         // Set rid
         auto it = _ssrc_to_rid.find(ssrc);
-        if (it == _ssrc_to_rid.end() || it->second != rid) {
-            _ssrc_to_rid[ssrc] = rid;
-            onGetRtp(header->pt, ssrc, rid);
+        if (it == _ssrc_to_rid.end() || it->second != _rid_scratch) {
+            _ssrc_to_rid[ssrc].assign(_rid_scratch);
+            onGetRtp(header->pt, ssrc, _rid_scratch);
         }
     }
     if (rid_ptr) {
-        *rid_ptr = rid;
+        rid_ptr->assign(_rid_scratch);
     }
     return ret;
 }

@@ -14,6 +14,8 @@
 #include <stdint.h>
 #include <map>
 #include <string>
+#include <utility>
+#include <vector>
 #include "Common/macros.h"
 #include "Rtsp/Rtsp.h"
 
@@ -53,9 +55,14 @@ class RtpExt {
 public:
     template<typename Type>
     friend void appendExt(std::map<uint8_t, RtpExt> &ret, uint8_t *ptr, const uint8_t *end);
+    template<typename Type>
+    friend void appendExt(std::vector<std::pair<uint8_t, RtpExt>> &ret, uint8_t *ptr, const uint8_t *end);
     friend class RtpExtContext;
 
     static std::map<uint8_t/*id*/, RtpExt/*data*/> getExtValue(const RtpHeader *header);
+    // 复用调用方buffer的无堆分配版本，迭代序与map版本一致(按id升序)  [AUTO-TRANSLATED:9d1b2a5c]
+    // Allocation-free version reusing the caller's buffer, iteration order is the same as the map version (ascending by id)
+    static void getExtValue(const RtpHeader *header, std::vector<std::pair<uint8_t/*id*/, RtpExt/*data*/>> &ret);
     static RtpExtType getExtType(const std::string &url);
     static const std::string& getExtUrl(RtpExtType type);
     static const char *getExtName(RtpExtType type);
@@ -138,6 +145,11 @@ private:
     std::unordered_map<uint8_t, RtpExtType> _rtp_ext_id_to_type;
     //ssrc --> rid
     std::unordered_map<uint32_t/*simulcast ssrc*/, std::string/*rid*/> _ssrc_to_rid;
+    // 以下scratch buffer仅用于消除每包堆分配，仅在本对象的poller线程内使用  [AUTO-TRANSLATED:3c8f7d21]
+    // The following scratch buffers are only used to eliminate per-packet heap allocation, and are only used in this object's poller thread
+    std::vector<std::pair<uint8_t/*id*/, RtpExt/*data*/>> _ext_scratch;
+    std::string _rid_scratch;
+    std::string _repaired_rid_scratch;
 };
 
 } //namespace mediakit
