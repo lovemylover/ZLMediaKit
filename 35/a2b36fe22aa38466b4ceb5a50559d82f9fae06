@@ -1,0 +1,26 @@
+src/Common/MediaSink.cpp
+  s_c207d49bf0c657::t_19af0061f38028 166-170
+  s_c207d49bf0c657::t_18bf4949d757f2 249-251
+  s_c207d49bf0c657::t_e0d311a11632a4 98-114,118-122
+  s_c207d49bf0c657::t_71b6b480ded9e6 53-57
+  s_c207d49bf0c657::t_ca32aa4ca89573 90-92
+  s_c207d49bf0c657::t_91e7b1d2a3dc53 363-367
+src/Common/MediaSink.h
+  s_c207d49bf0c657::t_b8f753ebf40f9f 260-268
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "35a2b36fe22aa38466b4ceb5a50559d82f9fae06",
+  "prompts": {},
+  "sessions": {
+    "s_c207d49bf0c657": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b03d0126-dc1e-4cd5-b642-06562b360fad",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
