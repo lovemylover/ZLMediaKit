@@ -50,6 +50,14 @@ FrameStamp::FrameStamp(Frame::Ptr frame, Stamp &stamp, int modify_stamp)
     stamp.revise(_frame->dts(), _frame->pts(), _dts, _pts, modify_stamp == ProtocolOption::kModifyStampSystem);
 }
 
+void FrameStamp::init(Frame::Ptr frame, Stamp &stamp, int modify_stamp) {
+    setIndex(frame->getIndex());
+    _frame = std::move(frame);
+    // kModifyStampSystem时采用系统时间戳，kModifyStampRelative采用相对时间戳  [AUTO-TRANSLATED:54dd5685]
+    // When using kModifyStampSystem, the system timestamp is used, and when using kModifyStampRelative, the relative timestamp is used.
+    stamp.revise(_frame->dts(), _frame->pts(), _dts, _pts, modify_stamp == ProtocolOption::kModifyStampSystem);
+}
+
 void FrameStamp::setStamp(int64_t dts, int64_t pts) {
     _dts = dts;
     _pts = pts;

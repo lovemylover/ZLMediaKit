@@ -539,6 +539,25 @@ private:
 class FrameStamp : public Frame {
 public:
     using Ptr = std::shared_ptr<FrameStamp>;
+
+    // 从对象池创建，减少每帧堆分配  [AUTO-TRANSLATED:8f1e4c2a]
+    // Create from object pool to reduce per-frame heap allocation
+    static Ptr create() {
+        static toolkit::ResourcePool<FrameStamp> packet_pool;
+        static toolkit::onceToken token([]() {
+            packet_pool.setSize(1024);
+        });
+        auto ret = packet_pool.obtain2();
+        ret->_dts = 0;
+        ret->_pts = 0;
+        ret->_frame = nullptr;
+        return ret;
+    }
+
+    // 初始化对象池中取出的对象，替代构造函数传参  [AUTO-TRANSLATED:3c7b9d51]
+    // Initialize the object obtained from the pool, replacing constructor arguments
+    void init(Frame::Ptr frame, Stamp &stamp, int modify_stamp);
+
     FrameStamp(Frame::Ptr frame);
     FrameStamp(Frame::Ptr frame, Stamp &stamp, int modify_stamp);
     ~FrameStamp() override {}
@@ -556,9 +575,13 @@ public:
     CodecId getCodecId() const override { return _frame->getCodecId(); }
     void setStamp(int64_t dts, int64_t pts);
 
+protected:
+    friend class toolkit::ResourcePool_l<FrameStamp>;
+    FrameStamp() = default;
+
 private:
-    int64_t _dts;
-    int64_t _pts;
+    int64_t _dts = 0;
+    int64_t _pts = 0;
     Frame::Ptr _frame;
 };
 
