@@ -1,0 +1,37 @@
+src/Rtp/RtpSender.cpp
+  s_90c79079fc1ade::t_4a0188dfe9fba0 412,419,422
+  s_90c79079fc1ade::t_7fd8358407eb71 44
+  s_90c79079fc1ade::t_1517815b71b69a 458
+src/Rtp/RtpCache.h
+  s_90c79079fc1ade::t_3cb8f813c6ba1b 16,23-28,30
+  s_13e9320feb8229::t_85756cf877f444 46
+src/Rtp/RtpCache.cpp
+  s_90c79079fc1ade::t_e8c2cb6d2fbf89 23
+src/Rtp/RtpSender.h
+  s_90c79079fc1ade::t_6babd8b52b50d2 106
+  s_90c79079fc1ade::t_e9ba8d310246ed 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "ab0d48ee133634ff808be10a0a33b90810d8f348",
+  "prompts": {},
+  "sessions": {
+    "s_13e9320feb8229": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "db41c536-94fc-4111-9f3b-dd3c633093f6",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    },
+    "s_90c79079fc1ade": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c582f862-ddc5-4a42-9131-5f2a2a62c3f1",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
