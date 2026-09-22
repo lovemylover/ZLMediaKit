@@ -806,7 +806,9 @@ RtmpCodec::Ptr getRtmpDecoderByTrack(const Track::Ptr &track) {
 }
 
 Frame::Ptr getFrameFromPtr(const char *data, size_t bytes, uint64_t dts, uint64_t pts) {
-    return std::make_shared<H265FrameNoCacheAble>((char *)data, bytes, dts, pts, prefixSize(data, bytes));
+    auto frame = H265FrameNoCacheAble::create();
+    frame->init((char *)data, bytes, dts, pts, prefixSize(data, bytes));
+    return frame;
 }
 
 } // namespace

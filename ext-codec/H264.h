@@ -13,6 +13,7 @@
 
 #include "Extension/Frame.h"
 #include "Extension/Track.h"
+#include "Util/ResourcePool.h"
 
 #define H264_TYPE(v) ((uint8_t)(v) & 0x1F)
 
@@ -27,6 +28,35 @@ public:
     friend class FrameImp;
     friend class toolkit::ResourcePool_l<H264FrameHelper>;
     using Ptr = std::shared_ptr<H264FrameHelper>;
+
+    // 从对象池创建，减少每帧堆分配；仅适用于 Parent = FrameFromPtr 的实例化(H264FrameNoCacheAble)
+    // Create from object pool to reduce per-frame heap allocation; only for the Parent = FrameFromPtr instantiation (H264FrameNoCacheAble)
+    static Ptr create() {
+        static toolkit::ResourcePool<H264FrameHelper> packet_pool;
+        static toolkit::onceToken token([]() {
+            packet_pool.setSize(1024);
+        });
+        auto ret = packet_pool.obtain2();
+        // 全量重置，避免对象复用时残留上一帧的 _ptr/_size 等成员
+        // Reset all members to avoid stale data from the previous frame when the object is reused
+        ret->init(nullptr, 0, 0, 0, 0, false);
+        // _index 由下游 setIndex 赋值，需复位为未设置状态，与原构造语义保持一致
+        // _index is assigned by setIndex downstream; reset it to the unset state to match the original constructor semantics
+        ret->setIndex(-1);
+        return ret;
+    }
+
+    // 初始化对象池中取出的对象，替代构造函数传参
+    // Initialize the object obtained from the pool, replacing constructor arguments
+    void init(char *ptr, size_t size, uint64_t dts, uint64_t pts = 0, size_t prefix_size = 0, bool is_key = false) {
+        this->_ptr = ptr;
+        this->_size = size;
+        this->_dts = dts;
+        this->_pts = pts;
+        this->_prefix_size = prefix_size;
+        this->_is_key = is_key;
+        this->_codec_id = CodecH264;
+    }
 
     enum {
         NAL_IDR = 5,

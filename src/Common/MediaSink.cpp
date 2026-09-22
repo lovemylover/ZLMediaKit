@@ -99,7 +99,13 @@ bool MediaSink::inputFrame(const Frame::Ptr &frame) {
         // Video driver generates silent audio
         _mute_audio_maker->inputFrame(frame);
     }
-    checkTrackIfReady();
+    // _all_track_ready为真后，_track_map内不存在未收到数据的track(稳态不变量)，
+    // 此时checkTrackIfReady三个分支均为空转，跳过map遍历/虚函数/clock_gettime
+    // Once _all_track_ready is true, no track in _track_map lacks data (steady-state invariant);
+    // all three branches of checkTrackIfReady are no-ops, skip the map walk/virtual call/clock_gettime
+    if (!_all_track_ready) {
+        checkTrackIfReady();
+    }
     return ret;
 }
 
