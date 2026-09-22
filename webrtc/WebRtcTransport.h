@@ -281,6 +281,10 @@ public:
 
     //for recv rtp
     std::unordered_map<std::string/*rid*/, std::shared_ptr<RtpChannel> > rtp_channel;
+    // rid -> channel 单槽 memo，同一会话 rid 恒定，命中率近100%  [AUTO-TRANSLATED]
+    // Single-slot memo for rid -> channel; rid stays constant within a session, so hit rate is ~100%
+    std::string _cached_rid;
+    std::shared_ptr<RtpChannel> _cached_channel;
     std::shared_ptr<RtpChannel> getRtpChannel(uint32_t ssrc) const;
 };
 

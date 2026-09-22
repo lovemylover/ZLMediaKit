@@ -1390,9 +1390,18 @@ void WrappedRtpTrack::inputRtp(const char *buf, size_t len, uint64_t stamp_ms, R
         _twcc_ctx.onRtp(ssrc, twcc_ext.getTransportCCSeq(), stamp_ms);
     }
 
-    auto &ref = track->rtp_channel[rid];
-    if (!ref) {
-        _transport.createRtpChannel(rid, ssrc, *track);
+    std::shared_ptr<RtpChannel> ref;
+    if (rid == track->_cached_rid && track->_cached_channel) {
+        ref = track->_cached_channel;
+    } else {
+        auto &map_ref = track->rtp_channel[rid];
+        if (!map_ref) {
+            _transport.createRtpChannel(rid, ssrc, *track);
+        }
+        //createRtpChannel执行后map元素才有效，缓存写入必须在之后
+        ref = map_ref;
+        track->_cached_rid = rid;
+        track->_cached_channel = ref;
     }
 
     // 解析并排序rtp  [AUTO-TRANSLATED:d382b65d]
@@ -1406,13 +1415,21 @@ void WrappedRtxTrack::inputRtp(const char *buf, size_t len, uint64_t stamp_ms, R
     string rid;
     track->rtp_ext_ctx->changeRtpExtId(rtp, true, &rid, RtpExtType::transport_cc);
 
-    auto &ref = track->rtp_channel[rid];
-    if (!ref) {
-        // 再接收到对应的rtp前，丢弃rtx包  [AUTO-TRANSLATED:d4ca6d69]
-        // Discard rtx packets before receiving the corresponding rtp
-        WarnL << "unknown rtx rtp, rid:" << rid << ", ssrc:" << ntohl(rtp->ssrc) << ", codec:" << track->plan_rtp->codec
-              << ", seq:" << ntohs(rtp->seq);
-        return;
+    std::shared_ptr<RtpChannel> ref;
+    if (rid == track->_cached_rid && track->_cached_channel) {
+        ref = track->_cached_channel;
+    } else {
+        auto it = track->rtp_channel.find(rid);
+        if (it == track->rtp_channel.end()) {
+            // 再接收到对应的rtp前，丢弃rtx包  [AUTO-TRANSLATED:d4ca6d69]
+            // Discard rtx packets before receiving the corresponding rtp
+            WarnL << "unknown rtx rtp, rid:" << rid << ", ssrc:" << ntohl(rtp->ssrc) << ", codec:" << track->plan_rtp->codec
+                  << ", seq:" << ntohs(rtp->seq);
+            return;
+        }
+        ref = it->second;
+        track->_cached_rid = rid;
+        track->_cached_channel = ref;
     }
 
     // 这里是rtx重传包  [AUTO-TRANSLATED:6efd3766]
