@@ -12,8 +12,10 @@
 #define ZLMEDIAKIT_FRAME_H
 
 #include <map>
+#include <vector>
 #include <mutex>
 #include <functional>
+#include <algorithm>
 #include "Util/List.h"
 #include "Util/TimeTicker.h"
 #include "Common/Stamp.h"
@@ -712,7 +714,17 @@ public:
      */
     FrameWriterInterface* addDelegate(FrameWriterInterface::Ptr delegate) {
         std::lock_guard<std::mutex> lck(_mtx);
-        return _delegates.emplace(delegate.get(), std::move(delegate)).first->second.get();
+        auto ptr = delegate.get();
+        // 与原先map实现保持一致：同一代理重复添加只保留一份  [AUTO-TRANSLATED:7c1f0a02]
+        // Keep consistent with the original map implementation: adding the same delegate twice keeps only one
+        for (auto &item : _delegates) {
+            if (item.get() == ptr) {
+                return ptr;
+            }
+        }
+        _delegates.emplace_back(std::move(delegate));
+        _delegates_dirty = true;
+        return ptr;
     }
 
     FrameWriterInterface* addDelegate(std::function<bool(const Frame::Ptr &frame)> cb);
@@ -725,7 +737,12 @@ public:
      */
     void delDelegate(FrameWriterInterface *ptr) {
         std::lock_guard<std::mutex> lck(_mtx);
-        _delegates.erase(ptr);
+        _delegates.erase(std::remove_if(_delegates.begin(), _delegates.end(),
+                                        [ptr](const FrameWriterInterface::Ptr &item) {
+                                            return item.get() == ptr;
+                                        }),
+                         _delegates.end());
+        _delegates_dirty = true;
     }
 
     /**
@@ -737,14 +754,24 @@ public:
     bool inputFrame(const Frame::Ptr &frame) override {
         doStatistics(frame);
         bool ret = false;
-        decltype(_delegates) delegates_snap;
+        DelegateVectorPtr delegates_snap;
         {
             std::lock_guard<std::mutex> lck(_mtx);
-            delegates_snap = _delegates;
+            if (_delegates_dirty) {
+                // 仅在代理列表变化时重建快照（copy-on-write），避免每帧深拷贝  [AUTO-TRANSLATED:5a83c1de]
+                // Only rebuild the snapshot when the delegate list changes (copy-on-write), avoiding a deep copy per frame
+                _delegates_snap = std::make_shared<DelegateVector>(_delegates);
+                _delegates_dirty = false;
+            }
+            delegates_snap = _delegates_snap;
         }
-        for (auto &pr : delegates_snap) {
-            if (pr.second->inputFrame(frame)) {
-                ret = true;
+        // 快照发布后不再修改，因此可以脱离锁遍历  [AUTO-TRANSLATED:9f0b2d41]
+        // The published snapshot is immutable, so it can be iterated without holding the lock
+        if (delegates_snap) {
+            for (auto &item : *delegates_snap) {
+                if (item->inputFrame(frame)) {
+                    ret = true;
+                }
             }
         }
         return ret;
@@ -764,6 +791,7 @@ public:
     void clear() {
         std::lock_guard<std::mutex> lck(_mtx);
         _delegates.clear();
+        _delegates_dirty = true;
     }
 
     /**
@@ -819,6 +847,9 @@ private:
     }
 
 private:
+    using DelegateVector = std::vector<FrameWriterInterface::Ptr>;
+    using DelegateVectorPtr = std::shared_ptr<const DelegateVector>;
+
     toolkit::Ticker _ticker;
     size_t _gop_interval_ms = 0;
     size_t _gop_size = 0;
@@ -827,7 +858,11 @@ private:
     uint64_t _video_key_frames = 0;
     Stamp _stamp;
     mutable std::mutex _mtx;
-    std::map<void *, FrameWriterInterface::Ptr> _delegates;
+    DelegateVector _delegates;
+    // 代理列表的只读快照，代理变化时才重建  [AUTO-TRANSLATED:3d7e91b4]
+    // Read-only snapshot of the delegate list, rebuilt only when delegates change
+    DelegateVectorPtr _delegates_snap;
+    bool _delegates_dirty = true;
 };
 
 } // namespace mediakit
