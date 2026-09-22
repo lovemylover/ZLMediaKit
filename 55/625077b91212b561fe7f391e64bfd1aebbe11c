@@ -1,0 +1,26 @@
+src/Extension/Frame.h
+  s_d2fbd7e4f688eb::t_b25af4e1af1418 21-22
+  s_d2fbd7e4f688eb::t_5cb80e5f50cbde 494-523,548-550
+  s_d2fbd7e4f688eb::t_4ddcc4cfd7a757 564-567
+  s_d2fbd7e4f688eb::t_f54fed2e5f1f71 551
+src/Extension/Frame.cpp
+  s_d2fbd7e4f688eb::t_13a3688e61877d 38-40
+src/Extension/Factory.cpp
+  s_d2fbd7e4f688eb::t_4e8930321cc02a 233-235
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "55625077b91212b561fe7f391e64bfd1aebbe11c",
+  "prompts": {},
+  "sessions": {
+    "s_d2fbd7e4f688eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fa8146ec-36e4-4aca-90a6-f1897ed1986e",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
