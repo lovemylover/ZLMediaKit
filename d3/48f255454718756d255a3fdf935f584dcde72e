@@ -1,0 +1,33 @@
+webrtc/Nack.h
+  s_73579b809c6450::t_3ee33d08146e65 51-58
+  s_73579b809c6450::t_d1c28d9e910b95 17
+webrtc/Nack.cpp
+  s_73579b809c6450::t_de76b3696517c5 132,137,140-144
+  s_73579b809c6450::t_eca402f5c811b8 172,175-176,181
+  s_73579b809c6450::t_69af3dbbbabcb3 64-77,82-87,92
+  s_fea2169c522db4::t_591d6d6140d9fc 173-174
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "d348f255454718756d255a3fdf935f584dcde72e",
+  "prompts": {},
+  "sessions": {
+    "s_73579b809c6450": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "34e4e907-5082-425a-b6c2-bd05a8907d2c",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    },
+    "s_fea2169c522db4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "715c6c52-dd62-4136-9724-53c4d16158dd",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
