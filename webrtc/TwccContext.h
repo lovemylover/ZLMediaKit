@@ -12,7 +12,8 @@
 #define ZLMEDIAKIT_TWCCCONTEXT_H
 
 #include <stdint.h>
-#include <map>
+#include <vector>
+#include <utility>
 #include <functional>
 #include <string>
 
@@ -40,7 +41,10 @@ private:
 private:
     uint64_t _min_stamp = 0;
     uint64_t _max_stamp;
-    std::map<uint32_t /*twcc_ext_seq*/, uint64_t/*recv time in ms*/> _rtp_recv_status;
+    // 按twcc_ext_seq升序排列，窗口极小(kMaxSeqSize)，用有序数组替代map以避免每包节点malloc/free  [AUTO-TRANSLATED:530d1e35]
+    // Sorted by twcc_ext_seq in ascending order. The window is very small (kMaxSeqSize), so an ordered
+    // array is used instead of a map to avoid per-packet node malloc/free
+    std::vector<std::pair<uint32_t /*twcc_ext_seq*/, uint64_t/*recv time in ms*/>> _rtp_recv_status;
     uint8_t _twcc_pkt_count = 0;
     onSendTwccCB _cb;
 };
