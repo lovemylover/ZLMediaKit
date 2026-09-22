@@ -244,6 +244,28 @@ private:
     void createGopCacheIfNeed();
     std::shared_ptr<MediaSinkInterface> makeRecorder(Recorder::type type);
 
+    // 获取某个index对应的Stamp,稳态走memo快路径,避免每帧哈希查找  [AUTO-TRANSLATED]
+    // Get the Stamp corresponding to an index, the steady state uses the memo fast path to avoid per-frame hash lookup
+    Stamp &getStamp(int index) {
+        // 判空是必要的:Frame::getIndex()在track未设置index时可能返回-1(TrackInvalid),
+        // 与空闲槽的-1哨兵值相等  [AUTO-TRANSLATED]
+        // The null check is necessary: Frame::getIndex() may return -1 (TrackInvalid) when the track index is not set,
+        // which equals the -1 sentinel of an idle slot
+        if (index == _stamp_memo_index[0] && _stamp_memo_ptr[0]) {
+            return *_stamp_memo_ptr[0];
+        }
+        if (index == _stamp_memo_index[1] && _stamp_memo_ptr[1]) {
+            return *_stamp_memo_ptr[1];
+        }
+        // 未命中回退operator[],插入语义不变  [AUTO-TRANSLATED]
+        // Fallback to operator[] on miss, insertion semantics unchanged
+        auto &stamp = _stamps[index];
+        auto slot = _stamp_memo_next++ & 1;
+        _stamp_memo_index[slot] = index;
+        _stamp_memo_ptr[slot] = &stamp;
+        return stamp;
+    }
+
 private:
     bool _is_enable = false;
     bool _create_in_poller = false;
@@ -255,6 +277,11 @@ private:
     ProtocolOption _option;
     toolkit::Ticker _last_check;
     std::unordered_map<int, Stamp> _stamps;
+    // _stamps元素指针的memo缓存,unordered_map为节点容器,rehash不失效元素指针  [AUTO-TRANSLATED]
+    // Memo cache of _stamps element pointers, unordered_map is a node container, rehash does not invalidate element pointers
+    int _stamp_memo_index[2] = {-1, -1};
+    Stamp *_stamp_memo_ptr[2] = {nullptr, nullptr};
+    size_t _stamp_memo_next = 0;
     std::weak_ptr<Listener> _track_listener;
 #if defined(ENABLE_RTPPROXY)
     std::unordered_multimap<std::string, std::tuple<RingType::RingReader::Ptr, std::weak_ptr<RtpSender>>> _rtp_sender;

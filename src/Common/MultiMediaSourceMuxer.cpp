@@ -886,7 +886,7 @@ bool MultiMediaSourceMuxer::onTrackFrame(const Frame::Ptr &frame_in) {
         // 时间戳不采用原始的绝对时间戳  [AUTO-TRANSLATED:8beb3bf7]
         // Timestamp does not use the original absolute timestamp
         auto stamp_frame = FrameStamp::create();
-        stamp_frame->init(frame, _stamps[frame->getIndex()], _option.modify_stamp);
+        stamp_frame->init(frame, getStamp(frame->getIndex()), _option.modify_stamp);
         frame = std::move(stamp_frame);
     }
     return _paced_sender ? _paced_sender->inputFrame(frame) : onTrackFrame_l(frame);
