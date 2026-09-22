@@ -62,6 +62,18 @@ private:
     DecoderImp::Ptr _decoder;
     MediaSinkInterface *_interface;
     std::shared_ptr<FILE> _save_file_ps;
+    // pt类型哈希查找的memo缓存,命中时避免每包哈希查找  [AUTO-TRANSLATED]
+    // Memo cache for pt hash lookup, avoids per-packet hash lookup on hit
+    struct PtMemo {
+        // rtp头pt字段为7bit,取0xFFFFFFFF作为无效值  [AUTO-TRANSLATED]
+        // The pt field of the rtp header is 7 bits, use 0xFFFFFFFF as the invalid value
+        static constexpr uint32_t kInvalidPT = 0xFFFFFFFF;
+        uint32_t pt = kInvalidPT;
+        RtpReceiverImp *receiver = nullptr;
+        RtpCodec *decoder = nullptr;
+    };
+    PtMemo _pt_memo[2];
+    size_t _pt_memo_next = 0;
     std::unordered_map<uint8_t, RtpCodec::Ptr> _rtp_decoder;
     std::unordered_map<uint8_t, std::shared_ptr<RtpReceiverImp> > _rtp_receiver;
 };

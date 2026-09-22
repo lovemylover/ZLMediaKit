@@ -59,7 +59,14 @@ GB28181Process::GB28181Process(const MediaInfo &media_info, MediaSinkInterface *
 }
 
 void GB28181Process::onRtpSorted(RtpPacket::Ptr rtp) {
-    _rtp_decoder[rtp->getHeader()->pt]->inputRtp(rtp, false);
+    auto pt = rtp->getHeader()->pt;
+    for (auto &m : _pt_memo) {
+        if (m.pt == pt && m.decoder) {
+            m.decoder->inputRtp(rtp, false);
+            return;
+        }
+    }
+    _rtp_decoder[pt]->inputRtp(rtp, false);
 }
 
 void GB28181Process::flush() {
@@ -69,15 +76,24 @@ void GB28181Process::flush() {
 }
 
 bool GB28181Process::inputRtp(bool, const char *data, size_t data_len) {
-    GET_CONFIG(uint32_t, h264_pt, RtpProxy::kH264PT);
-    GET_CONFIG(uint32_t, h265_pt, RtpProxy::kH265PT);
-    GET_CONFIG(uint32_t, ps_pt, RtpProxy::kPSPT);
-    GET_CONFIG(uint32_t, opus_pt, RtpProxy::kOpusPT);
-
     RtpHeader *header = (RtpHeader *)data;
     auto pt = header->pt;
+
+    // PT memo 快路径  [AUTO-TRANSLATED]
+    // PT memo fast path
+    for (auto &m : _pt_memo) {
+        if (m.pt == pt && m.receiver) {
+            return m.receiver->inputRtp(TrackVideo, (unsigned char *)data, data_len);
+        }
+    }
+
     auto &ref = _rtp_receiver[pt];
     if (!ref) {
+        GET_CONFIG(uint32_t, h264_pt, RtpProxy::kH264PT);
+        GET_CONFIG(uint32_t, h265_pt, RtpProxy::kH265PT);
+        GET_CONFIG(uint32_t, ps_pt, RtpProxy::kPSPT);
+        GET_CONFIG(uint32_t, opus_pt, RtpProxy::kOpusPT);
+
         if (_rtp_receiver.size() > 2) {
             // 防止pt类型太多导致内存溢出  [AUTO-TRANSLATED:7695e49b]
             // Prevent too many pt types from causing memory overflow
@@ -160,6 +176,13 @@ bool GB28181Process::inputRtp(bool, const char *data, size_t data_len) {
             onRtpDecode(frame);
             return true;
         });
+
+        // 记录memo,后续包走int比较快路径  [AUTO-TRANSLATED]
+        // Record memo, subsequent packets use the int-compare fast path
+        auto &slot = _pt_memo[_pt_memo_next++ & 1];
+        slot.pt = pt;
+        slot.receiver = ref.get();
+        slot.decoder = _rtp_decoder[pt].get();
     }
 
     return ref->inputRtp(TrackVideo, (unsigned char *)data, data_len);
