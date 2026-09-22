@@ -1,0 +1,25 @@
+src/Rtp/GB28181Process.cpp
+  s_56bebfb0e872bc::t_5da3874431215e 62
+  s_56bebfb0e872bc::t_b573f87590f3ba 81-89,92-96
+  s_56bebfb0e872bc::t_3922b4b755f30d 63-69
+  s_56bebfb0e872bc::t_08229da5abcc48 179-185
+src/Rtp/GB28181Process.h
+  s_56bebfb0e872bc::t_ce1664370584d3 68-71
+  s_56bebfb0e872bc::t_a0670c4c7540bd 65-67,72-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "c61ae4735c9227f1ae1a89aed5714bb4cde1a289",
+  "prompts": {},
+  "sessions": {
+    "s_56bebfb0e872bc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "29ea66bb-030d-407a-b23c-1826bcfd2c61",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
