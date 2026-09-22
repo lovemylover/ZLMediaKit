@@ -8,6 +8,7 @@
  * may be found in the AUTHORS file in the root of the source tree.
  */
 
+#include <array>
 #include "Frame.h"
 #include "Common/Parser.h"
 #include "Common/Stamp.h"
@@ -119,15 +120,21 @@ CodecId getCodecByMpegId(int mpeg_id) {
         return CodecInvalid;
     }
 
-#define XX(name, type, value, str, mpeg_id, mp4_id) { mpeg_id, name },
-    static map<int, CodecId> s_map = { CODEC_MAP(XX) };
+    // 256项静态查表，替代红黑树查找，消除每帧map查找开销  [AUTO-TRANSLATED:7f2c1a9b]
+    // 256-entry static lookup table replacing the red-black tree lookup, eliminating per-frame map lookup overhead.
+    static const auto s_map = []() {
+        std::array<CodecId, 256> arr;
+        arr.fill(CodecInvalid);
+#define XX(name, type, value, str, mpeg_id, mp4_id) arr[mpeg_id] = name;
+        CODEC_MAP(XX)
 #undef XX
-    auto it = s_map.find(mpeg_id);
-    if (it == s_map.end()) {
+        return arr;
+    }();
+    auto codec = (unsigned)mpeg_id < 256 ? s_map[mpeg_id] : CodecInvalid;
+    if (codec == CodecInvalid) {
         WarnL << "Unsupported mpeg: " << mpeg_id;
-        return CodecInvalid;
     }
-    return it->second;
+    return codec;
 }
 
 #endif
