@@ -35,7 +35,9 @@ Frame::Ptr Frame::getCacheAbleFrame(const Frame::Ptr &frame){
     if(frame->cacheAble()){
         return frame;
     }
-    return std::make_shared<FrameCacheAble>(frame);
+    auto ret = FrameCacheAble::create();
+    ret->init(frame);
+    return ret;
 }
 
 FrameStamp::FrameStamp(Frame::Ptr frame) {

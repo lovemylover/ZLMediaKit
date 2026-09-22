@@ -230,7 +230,9 @@ Frame::Ptr Factory::getFrameFromBuffer(CodecId codec, Buffer::Ptr data, uint64_t
     if (!frame) {
         return nullptr;
     }
-    return std::make_shared<FrameCacheAble>(frame, false, std::move(data));
+    auto ret = FrameCacheAble::create();
+    ret->init(frame, false, std::move(data));
+    return ret;
 }
 
 } // namespace mediakit

@@ -18,6 +18,8 @@
 #include <algorithm>
 #include "Util/List.h"
 #include "Util/TimeTicker.h"
+#include "Util/ResourcePool.h"
+#include "Util/onceToken.h"
 #include "Common/Stamp.h"
 #include "Network/Buffer.h"
 
@@ -489,7 +491,36 @@ class FrameCacheAble : public FrameFromPtr {
 public:
     using Ptr = std::shared_ptr<FrameCacheAble>;
 
-    FrameCacheAble(const Frame::Ptr &frame, bool force_key_frame = false, toolkit::Buffer::Ptr buf = nullptr) {
+    // 从对象池创建，减少每帧堆分配  [AUTO-TRANSLATED:5f0b6b1c]
+    // Create from object pool to reduce per-frame heap allocation
+    static Ptr create() {
+        static toolkit::ResourcePool<FrameCacheAble> packet_pool;
+        static toolkit::onceToken token([]() {
+            packet_pool.setSize(1024);
+        });
+        auto ret = packet_pool.obtain2();
+        // 重置自身成员，避免对象复用时残留上一帧数据  [AUTO-TRANSLATED:0a4b6e1d]
+        // Reset own members to avoid stale data from the previous frame when the object is reused
+        ret->_key = false;
+        ret->_config = false;
+        ret->_drop_able = false;
+        ret->_decode_able = false;
+        ret->_buffer = nullptr;
+        // 重置基类FrameFromPtr成员  [AUTO-TRANSLATED:7c2d9f3e]
+        // Reset base class FrameFromPtr members
+        ret->_ptr = nullptr;
+        ret->_size = 0;
+        ret->_dts = 0;
+        ret->_pts = 0;
+        ret->_prefix_size = 0;
+        ret->_is_key = false;
+        ret->_codec_id = CodecInvalid;
+        return ret;
+    }
+
+    // 初始化对象池中取出的对象，替代构造函数传参  [AUTO-TRANSLATED:1d8e4a2f]
+    // Initialize the object obtained from the pool, replacing constructor arguments
+    void init(const Frame::Ptr &frame, bool force_key_frame = false, toolkit::Buffer::Ptr buf = nullptr) {
         setIndex(frame->getIndex());
         if (frame->cacheAble()) {
             _ptr = frame->data();
@@ -514,6 +545,10 @@ public:
         _decode_able = frame->decodeAble();
     }
 
+    FrameCacheAble(const Frame::Ptr &frame, bool force_key_frame = false, toolkit::Buffer::Ptr buf = nullptr) {
+        init(frame, force_key_frame, std::move(buf));
+    }
+
     /**
      * 可以被缓存
      * Can be cached
@@ -525,6 +560,10 @@ public:
     bool configFrame() const override { return _config; }
     bool dropAble() const override { return _drop_able; }
     bool decodeAble() const override { return _decode_able; }
+
+protected:
+    friend class toolkit::ResourcePool_l<FrameCacheAble>;
+    FrameCacheAble() = default;
 
 private:
     bool _key;
