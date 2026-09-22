@@ -1,0 +1,21 @@
+src/Extension/Frame.cpp
+  s_38e8ccc478752c::t_01a9045683a9e6 124-129,131-134,137
+  s_38e8ccc478752c::t_676a287afe5e99 123
+  s_38e8ccc478752c::t_124c14e1fd1ab3 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "57b93216ce21b244347fd521c729a3fad99dffa7",
+  "prompts": {},
+  "sessions": {
+    "s_38e8ccc478752c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e06088e3-6cd0-48b8-a750-b4a380600098",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
