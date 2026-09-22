@@ -1,0 +1,19 @@
+src/Common/PacketCache.h
+  s_90c79079fc1ade::t_242d89d838d8e8 38-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "0fa7ca42b1f8fdeb7964ee338c02a51940e8edec",
+  "prompts": {},
+  "sessions": {
+    "s_90c79079fc1ade": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c582f862-ddc5-4a42-9131-5f2a2a62c3f1",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
