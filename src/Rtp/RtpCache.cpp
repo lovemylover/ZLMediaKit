@@ -20,7 +20,7 @@ RtpCache::RtpCache(onFlushed cb) {
     _cb = std::move(cb);
 }
 
-void RtpCache::onFlush(std::shared_ptr<List<Buffer::Ptr>> rtp_list, bool) {
+void RtpCache::onFlush(std::shared_ptr<std::vector<Buffer::Ptr> > rtp_list, bool) {
     _cb(std::move(rtp_list));
 }
 

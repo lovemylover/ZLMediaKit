@@ -41,7 +41,7 @@ void RtpSender::startSend(const MediaSourceEvent &sender, const MediaSourceEvent
     if (!_interface) {
         // 重连时不重新创建对象  [AUTO-TRANSLATED:b788cd5d]
         // Do not recreate the object when reconnecting
-        auto lam = [this](std::shared_ptr<List<Buffer::Ptr>> list) { onFlushRtpList(std::move(list)); };
+        auto lam = [this](std::shared_ptr<std::vector<Buffer::Ptr> > list) { onFlushRtpList(std::move(list)); };
         switch (args.data_type) {
             case MediaSourceEvent::SendRtpArgs::kRtpPS: _interface = std::make_shared<RtpCachePS>(lam, stoll(args.ssrc), args.pt, true); break;
             case MediaSourceEvent::SendRtpArgs::kRtpTS: _interface = std::make_shared<RtpCachePS>(lam, stoll(args.ssrc), args.pt, false); break;
@@ -409,17 +409,17 @@ void RtpSender::onClose(const SockException &ex) {
 
 // 此函数在其他线程执行  [AUTO-TRANSLATED:3569a681]
 // This function is executed in another thread
-void RtpSender::onFlushRtpList(shared_ptr<List<Buffer::Ptr>> rtp_list) {
+void RtpSender::onFlushRtpList(shared_ptr<std::vector<Buffer::Ptr> > rtp_list) {
     if (!_is_connect) {
         // 连接成功后才能发送数据  [AUTO-TRANSLATED:14d00ad5]
         // Data can only be sent after the connection is successful
         return;
     }
 
-    auto send_func = [this](const shared_ptr<List<Buffer::Ptr>> &rtp_list) {
+    auto send_func = [this](const shared_ptr<std::vector<Buffer::Ptr> > &rtp_list) {
         size_t i = 0;
         auto size = rtp_list->size();
-        rtp_list->for_each([&](Buffer::Ptr &packet) {
+        for (auto &packet : *rtp_list) {
             switch (_args.con_type) {
                 case MediaSourceEvent::SendRtpArgs::kUdpActive:
                 case MediaSourceEvent::SendRtpArgs::kUdpPassive: {
@@ -455,7 +455,7 @@ void RtpSender::onFlushRtpList(shared_ptr<List<Buffer::Ptr>> rtp_list) {
                     muxer->pause(MediaSource::NullMediaSource(), true);
                 }
             }
-        });
+        }
     };
     if (_args.con_type != MediaSourceEvent::SendRtpArgs::kVoiceTalk) {
         weak_ptr<RtpSender> weak_self = shared_from_this();

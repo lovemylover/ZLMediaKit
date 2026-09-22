@@ -11,6 +11,7 @@
 #ifndef ZLMEDIAKIT_RTPSENDER_H
 #define ZLMEDIAKIT_RTPSENDER_H
 #if defined(ENABLE_RTPPROXY)
+#include <vector>
 #include "PSEncoder.h"
 #include "Extension/CommonRtp.h"
 #include "Rtcp/RtcpContext.h"
@@ -102,7 +103,7 @@ public:
 private:
     // 合并写输出  [AUTO-TRANSLATED:23544836]
     // Merge write output
-    void onFlushRtpList(std::shared_ptr<toolkit::List<toolkit::Buffer::Ptr> > rtp_list);
+    void onFlushRtpList(std::shared_ptr<std::vector<toolkit::Buffer::Ptr> > rtp_list);
     // udp/tcp连接成功回调  [AUTO-TRANSLATED:ca35017d]
     // UDP/TCP connection success callback
     void onConnect();

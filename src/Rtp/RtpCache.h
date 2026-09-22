@@ -13,15 +13,21 @@
 
 #if defined(ENABLE_RTPPROXY)
 
+#include <vector>
 #include "PSEncoder.h"
 #include "RawEncoder.h"
 #include "Common/PacketCache.h"
 
 namespace mediakit{
 
-class RtpCache : protected PacketCache<toolkit::Buffer> {
+// rtp转发路径每包都会追加到合并写缓存，用vector替代默认的List(std::list)，
+// 消除每个rtp包一次list节点malloc/释放；仅此处特化，不影响RTMP/TS/FMP4等其他协议的PacketCache
+// Every RTP packet is appended to the merge-write cache, so a vector is used instead of the default
+// List (std::list) to avoid one list-node malloc/free per RTP packet. Only this specialization is
+// changed, so PacketCache users such as RTMP/TS/FMP4 are unaffected
+class RtpCache : protected PacketCache<toolkit::Buffer, FlushPolicy, std::vector<std::shared_ptr<toolkit::Buffer> > > {
 public:
-    using onFlushed = std::function<void(std::shared_ptr<toolkit::List<toolkit::Buffer::Ptr> >)>;
+    using onFlushed = std::function<void(std::shared_ptr<std::vector<toolkit::Buffer::Ptr> >)>;
     RtpCache(onFlushed cb);
 
 protected:
@@ -37,7 +43,7 @@ protected:
     void input(uint64_t stamp, toolkit::Buffer::Ptr buffer,bool is_key = false);
 
 protected:
-    void onFlush(std::shared_ptr<toolkit::List<toolkit::Buffer::Ptr> > rtp_list, bool) override;
+    void onFlush(std::shared_ptr<std::vector<toolkit::Buffer::Ptr> > rtp_list, bool) override;
 
 private:
     onFlushed _cb;
