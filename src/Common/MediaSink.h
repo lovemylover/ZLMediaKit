@@ -257,6 +257,15 @@ private:
     std::unordered_map<int, toolkit::List<Frame::Ptr> > _frame_unread;
     std::unordered_map<int, std::function<void()> > _track_ready_callback;
     std::unordered_map<int, std::pair<Track::Ptr, bool/*got frame*/> > _track_map;
+
+    // track查找的双槽memo缓存，命中时避免每帧哈希查找  [AUTO-TRANSLATED]
+    // Dual-slot memo cache for track lookup, avoids per-frame hash lookup on hit
+    struct TrackMemo {
+        int index = -1;
+        std::pair<Track::Ptr, bool> *ptr = nullptr;
+    };
+    TrackMemo _track_memo[2];
+    size_t _track_memo_next = 0;
 };
 
 

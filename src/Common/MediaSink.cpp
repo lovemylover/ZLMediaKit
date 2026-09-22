@@ -50,6 +50,11 @@ bool MediaSink::addTrack(const Track::Ptr &track_in) {
         WarnL << "Already add a same track: " << track->getIndex() << ", codec: " << track->getCodecName();
         return false;
     }
+    // emplace可能触发rehash，使所有元素指针失效，清空memo  [AUTO-TRANSLATED]
+    // emplace may rehash, invalidating all element pointers, clear memo
+    _track_memo[0] = {};
+    _track_memo[1] = {};
+    _track_memo_next = 0;
     _ticker.resetTime();
     _audio_add = track->getTrackType() == TrackAudio ? true : _audio_add;
     _track_ready_callback[index] = [this, track]() { onTrackReady(track); };
@@ -82,15 +87,39 @@ void MediaSink::resetTracks() {
     _mute_audio_maker = nullptr;
     _ticker.resetTime();
     _track_map.clear();
+    _track_memo[0] = {};
+    _track_memo[1] = {};
+    _track_memo_next = 0;
     _frame_unread.clear();
     _track_ready_callback.clear();
 }
 
 bool MediaSink::inputFrame(const Frame::Ptr &frame) {
-    auto it = _track_map.find(frame->getIndex());
+    int idx = frame->getIndex();
+    // memo快路径：命中则跳过unordered_map哈希查找  [AUTO-TRANSLATED]
+    // memo fast path: on hit, skip the unordered_map hash lookup
+    for (auto &m : _track_memo) {
+        if (m.index == idx && m.ptr) {
+            m.ptr->second = true;
+            auto ret = m.ptr->first->inputFrame(frame);
+            if (_mute_audio_maker && frame->getTrackType() == TrackVideo) {
+                _mute_audio_maker->inputFrame(frame);
+            }
+            if (!_all_track_ready) {
+                checkTrackIfReady();
+            }
+            return ret;
+        }
+    }
+    auto it = _track_map.find(idx);
     if (it == _track_map.end()) {
         return false;
     }
+    // 记录memo，供后续帧命中  [AUTO-TRANSLATED]
+    // Record memo for subsequent frames to hit
+    auto &memo = _track_memo[_track_memo_next++ & 1];
+    memo.index = idx;
+    memo.ptr = &it->second;
     // got frame
     it->second.second = true;
     auto ret = it->second.first->inputFrame(frame);
@@ -134,6 +163,11 @@ void MediaSink::checkTrackIfReady() {
                 WarnL << "Audio track index " << index << " codec " << it->second.first->getCodecName() << " receive no data for long "
                       << _ticker.elapsedTime() << "ms. Ignore it!";
                 it = _track_map.erase(it);
+                // erase可能删掉memo缓存的条目，清空memo  [AUTO-TRANSLATED]
+                // erase may remove the memo-cached entry, clear memo
+                _track_memo[0] = {};
+                _track_memo[1] = {};
+                _track_memo_next = 0;
                 _max_track_size -= 1;
                 _track_ready_callback.erase(index);
             } else {
@@ -212,6 +246,9 @@ void MediaSink::emitAllTrackReady() {
             if (!it->second.second || !it->second.first->ready()) {
                 WarnL << "Track not ready for a long time, ignored: " << it->second.first->getCodecName();
                 it = _track_map.erase(it);
+                _track_memo[0] = {};
+                _track_memo[1] = {};
+                _track_memo_next = 0;
                 continue;
             }
             ++it;
@@ -323,6 +360,11 @@ bool MediaSink::addMuteAudioTrack() {
     audio->setIndex(MUTE_AUDIO_INDEX);
     audio->setExtraData(ADTS_CONFIG, 2);
     _track_map[MUTE_AUDIO_INDEX] = std::make_pair(audio, true);
+    // operator[]插入可能触发rehash，使所有元素指针失效，清空memo  [AUTO-TRANSLATED]
+    // operator[] insert may rehash, invalidating all element pointers, clear memo
+    _track_memo[0] = {};
+    _track_memo[1] = {};
+    _track_memo_next = 0;
     audio->addDelegate([this](const Frame::Ptr &frame) { return onTrackFrame(frame); });
     _mute_audio_maker = std::make_shared<MuteAudioMaker>();
     _mute_audio_maker->addDelegate([audio](const Frame::Ptr &frame) { return audio->inputFrame(frame); });
