@@ -1,0 +1,27 @@
+src/Rtmp/RtmpProtocol.cpp
+  s_beedcf0683f87a::t_7c0e3198a73ed9 683-695
+  s_beedcf0683f87a::t_3f799c155a828f 742
+  s_beedcf0683f87a::t_3d79ef113a3f78 110-116
+src/Rtmp/RtmpProtocol.h
+  s_beedcf0683f87a::t_5187cc8a8c0506 122-124
+  s_beedcf0683f87a::t_dadf076732d9d5 109-121
+src/Rtmp/Rtmp.cpp
+  s_beedcf0683f87a::t_a6471bb9e87465 162-163
+  s_beedcf0683f87a::t_5e05f1bcee5038 161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "46b11559184a57ee6f5f2bd507e5a942d3ec60a1",
+  "prompts": {},
+  "sessions": {
+    "s_beedcf0683f87a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "318278ac-de3b-4a4a-8e00-81f7ddb90e6f",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
