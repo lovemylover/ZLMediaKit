@@ -10,6 +10,9 @@
 
 #include "Stamp.h"
 
+#include <algorithm>
+#include <cstring>
+
 // 时间戳最大允许跳变3秒，主要是防止网络抖动导致的跳变  [AUTO-TRANSLATED:144154de]
 // Timestamp maximum allowable jump is 3 seconds, mainly to prevent network jitter caused by the jump
 #define MAX_DELTA_STAMP (3 * 1000)
@@ -275,6 +278,56 @@ bool DtsGenerator::getDts(uint64_t pts, uint64_t &dts) {
     return ret;
 }
 
+void DtsGenerator::sorterInsert(uint64_t pts) {
+    if (_use_set) {
+        _pts_sorter.emplace(pts);
+        return;
+    }
+
+    auto begin = _pts_sorter_array.begin();
+    auto end = begin + _array_size;
+    auto it = std::lower_bound(begin, end, pts);
+    if (it != end && *it == pts) {
+        // 重复pts不增加队列长度，保持与std::set::emplace一致
+        // Duplicate pts does not grow the queue, same as std::set::emplace
+        return;
+    }
+
+    if (_array_size == kMaxInlineSize || _sorter_max_size > kMaxInlineSize) {
+        // 统计期时间戳异常导致队列超出内联容量，或B帧规模本身超过内联容量，
+        // 迁移到set并永久回退
+        // The queue exceeds the inline capacity due to abnormal timestamps in the
+        // statistics phase, or the B-frame scale itself exceeds it; migrate to the
+        // set and fall back permanently
+        _pts_sorter.insert(begin, end);
+        _pts_sorter.emplace(pts);
+        _array_size = 0;
+        _use_set = true;
+        return;
+    }
+
+    // 从后向前腾出插入位，保持队列升序
+    // Shift elements backwards to make room, keeping the queue ascending
+    auto pos = static_cast<size_t>(it - begin);
+    ::memmove(&_pts_sorter_array[pos + 1], &_pts_sorter_array[pos], (_array_size - pos) * sizeof(uint64_t));
+    _pts_sorter_array[pos] = pts;
+    ++_array_size;
+}
+
+uint64_t DtsGenerator::sorterPopMin() {
+    if (_use_set) {
+        auto it = _pts_sorter.begin();
+        auto min = *it;
+        _pts_sorter.erase(it);
+        return min;
+    }
+
+    auto min = _pts_sorter_array[0];
+    --_array_size;
+    ::memmove(&_pts_sorter_array[0], &_pts_sorter_array[1], _array_size * sizeof(uint64_t));
+    return min;
+}
+
 // 该算法核心思想是对pts进行排序，排序好的pts就是dts。  [AUTO-TRANSLATED:efb36e04]
 // The core idea of this algorithm is to sort the pts, and the sorted pts is the dts.
 // 排序有一定的滞后性，那么需要加上排序导致的时间戳偏移量  [AUTO-TRANSLATED:5ada843a]
@@ -318,29 +371,25 @@ bool DtsGenerator::getDts_l(uint64_t pts, uint64_t &dts) {
 
     // pts放入排序缓存列队，缓存列队最大等于连续B帧个数  [AUTO-TRANSLATED:ff598a97]
     // Put pts into the sorting cache queue, the maximum cache queue is equal to the number of consecutive B frames
-    _pts_sorter.emplace(pts);
+    sorterInsert(pts);
 
-    if (_sorter_max_size > 1 && _pts_sorter.size() > _sorter_max_size) {
+    if (_sorter_max_size > 1 && sorterSize() > _sorter_max_size) {
         // 如果启用了pts排序(意味着存在B帧)，并且pts排序缓存列队长度大于连续B帧个数，  [AUTO-TRANSLATED:002c0d03]
         // If pts sorting is enabled (meaning there are B frames), and the length of the pts sorting cache queue is greater than the number of consecutive B frames,
         // 意味着后续的pts都会比最早的pts大，那么说明可以取出最早的pts了，这个pts将当做该帧的dts基准  [AUTO-TRANSLATED:86b8f679]
         // It means that the subsequent pts will be larger than the earliest pts, which means that the earliest pts can be taken out, and this pts will be used as the dts baseline for this frame
-        auto it = _pts_sorter.begin();
-
         // 由于该pts是前面偏移了个_sorter_max_size帧的pts(也就是那帧画面的dts),  [AUTO-TRANSLATED:eb3657aa]
         // Since this pts is the pts of the previous _sorter_max_size frames (that is, the dts of that frame),
         // 那么我们加上时间戳偏移量，基本等于该帧的dts  [AUTO-TRANSLATED:245aac6e]
         // Then we add the timestamp offset, which is basically equal to the dts of this frame
-        dts = *it + _dts_pts_offset;
+        // pts排序缓存出列  [AUTO-TRANSLATED:8b580191]
+        // pts sorting cache dequeue
+        dts = sorterPopMin() + _dts_pts_offset;
         if (dts > pts) {
             // dts不能大于pts(基本不可能到达这个逻辑)  [AUTO-TRANSLATED:847c4531]
             // dts cannot be greater than pts (it is basically impossible to reach this logic)
             dts = pts;
         }
-
-        // pts排序缓存出列  [AUTO-TRANSLATED:8b580191]
-        // pts sorting cache dequeue
-        _pts_sorter.erase(it);
         return true;
     }
 

@@ -11,6 +11,7 @@
 #ifndef ZLMEDIAKIT_STAMP_H
 #define ZLMEDIAKIT_STAMP_H
 
+#include <array>
 #include <set>
 #include <cstdint>
 #include "Util/TimeTicker.h"
@@ -168,6 +169,25 @@ public:
 private:
     bool getDts_l(uint64_t pts, uint64_t &dts);
 
+    // pts排序列队的内联容量：实测峰值约为2 * _sorter_max_size(统计期比稳态更长)，
+    // 该容量覆盖常见B帧流(约15个以内连续B帧)，超出时回退set
+    // Inline capacity of the pts sorting queue: the measured peak is about
+    // 2 * _sorter_max_size (the statistics phase is longer than the steady state);
+    // this covers common B-frame streams (up to ~15 consecutive B frames) and
+    // falls back to the set beyond that
+    static constexpr size_t kMaxInlineSize = 32;
+
+    // 插入pts并保持升序，重复pts不增加队列长度(与std::set::emplace语义一致)
+    // Insert pts keeping ascending order; duplicate pts does not grow the queue
+    // (same semantics as std::set::emplace)
+    void sorterInsert(uint64_t pts);
+
+    // 弹出并返回最小值，等价于erase(begin())
+    // Pop and return the minimum, equivalent to erase(begin())
+    uint64_t sorterPopMin();
+
+    size_t sorterSize() const { return _use_set ? _pts_sorter.size() : _array_size; }
+
 private:
     uint64_t _dts_pts_offset = 0;
     uint64_t _last_dts = 0;
@@ -176,6 +196,12 @@ private:
     size_t _frames_since_last_max_pts = 0;
     size_t _sorter_max_size = 0;
     size_t _count_sorter_max_size = 0;
+    // 内联数组用尽或B帧规模超过内联容量后，永久回退到set路径
+    // Once the inline array is exhausted or the B-frame scale exceeds the inline
+    // capacity, permanently fall back to the set path
+    bool _use_set = false;
+    std::array<uint64_t, kMaxInlineSize> _pts_sorter_array{};
+    size_t _array_size = 0;
     std::set<uint64_t> _pts_sorter;
 };
 
