@@ -301,10 +301,30 @@ bool getAVCInfo(const string &strSps, int &iVideoWidth, int &iVideoHeight, float
 }
 
 static const char *memfind(const char *buf, ssize_t len, const char *subbuf, ssize_t sublen) {
-    for (auto i = 0; i < len - sublen; ++i) {
-        if (memcmp(buf + i, subbuf, sublen) == 0) {
-            return buf + i;
+    if (sublen <= 0 || len < sublen) {
+        // 长度非法时不可能匹配；sublen为负会导致下溢式越界比较，sublen为0会让memcmp恒等成立  [AUTO-TRANSLATED:2e9b1c47]
+        // Match is impossible when the length is illegal; a negative sublen causes overflow-style out-of-bounds comparison, and sublen equal to 0 makes memcmp always succeed
+        return NULL;
+    }
+    // 候选位置个数与旧实现保持一致(即[0, len-sublen))，避免改变分帧结果  [AUTO-TRANSLATED:5c8d0a31]
+    // The number of candidate positions stays the same as the old implementation (i.e. [0, len - sublen)) to avoid changing the frame splitting result
+    auto need = (size_t)sublen;
+    auto candidates = (size_t)(len - sublen);
+    auto pos = buf;
+    while (candidates > 0) {
+        // 先用memchr(向量化实现)快速定位候选首字节，再用memcmp校验剩余部分  [AUTO-TRANSLATED:9f1a3d58]
+        // Use memchr (a vectorized implementation) to quickly locate the candidate first byte, then verify the rest with memcmp
+        auto p = (const char *)memchr(pos, (unsigned char)subbuf[0], candidates);
+        if (!p) {
+            return NULL;
         }
+        if (memcmp(p, subbuf, need) == 0) {
+            return p;
+        }
+        // 跳过当前候选位置继续搜索  [AUTO-TRANSLATED:6a3e7c12]
+        // Skip the current candidate position and continue searching
+        candidates -= (size_t)(p - pos) + 1;
+        pos = p + 1;
     }
     return NULL;
 }
