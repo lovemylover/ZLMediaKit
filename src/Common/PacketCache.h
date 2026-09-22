@@ -35,6 +35,9 @@ private:
 // / \tparam policy Refresh cache strategy
 // / \tparam packet_list 包缓存类型  [AUTO-TRANSLATED:a434e7fe]
 // / \tparam packet_list Packet cache type
+// 注:默认使用List(std::list)，RtpCache显式特化为std::vector以消除每个rtp包的list节点分配  [AUTO-TRANSLATED:a434e7fe]
+// Note: List (std::list) is used by default. RtpCache explicitly specializes it to std::vector to
+// eliminate one list-node allocation per RTP packet
 template<typename packet, typename policy = FlushPolicy, typename packet_list = toolkit::List<std::shared_ptr<packet> > >
 class PacketCache {
 public:
