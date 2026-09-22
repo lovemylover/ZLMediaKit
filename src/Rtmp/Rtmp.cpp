@@ -158,9 +158,9 @@ void Metadata::addTrack(AMFValue &metadata, const Track::Ptr &track) {
 }
 
 RtmpPacket::Ptr RtmpPacket::create() {
-#if 0
-    static ResourcePool<RtmpPacket> packet_pool;
-    static onceToken token([]() {
+#if 1
+    static toolkit::ResourcePool<RtmpPacket> packet_pool;
+    static toolkit::onceToken token([]() {
         packet_pool.setSize(1024);
     });
     auto ret = packet_pool.obtain2();

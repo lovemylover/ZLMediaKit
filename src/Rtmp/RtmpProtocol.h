@@ -106,6 +106,22 @@ private:
     std::function<const char * (const char *data, size_t len)> _next_step_func;
     ////////////Chunk////////////
     std::unordered_map<int, std::pair<RtmpPacket::Ptr/*now*/, RtmpPacket::Ptr/*last*/> > _map_chunk_data;
+    // chunk数据2槽memo，稳态下每条消息的所有chunk走int比较快路径  [AUTO-TRANSLATED]
+    // 2-slot memo for chunk data; steady state hits the fast int-compare path for every chunk
+    // 注意：memo保存的是unordered_map节点内元素的地址，_map_chunk_data只做operator[]插入与clear，
+    // 节点地址不会因为rehash而失效；但clear()必须同步失效memo(见reset())。
+    // NOTE: the memo stores the address of the element inside the unordered_map node; _map_chunk_data
+    // only inserts via operator[] and clears, so the node address stays valid across rehash;
+    // however clear() must invalidate the memo in sync (see reset()).
+    struct ChunkMemo {
+        int chunk_id = -1;
+        std::pair<RtmpPacket::Ptr, RtmpPacket::Ptr> *pr = nullptr;
+    };
+    ChunkMemo _chunk_memo[2];
+    size_t _chunk_memo_next = 0;
+    // 获取chunk数据(now/last)，稳态走memo快路径，未命中才查表  [AUTO-TRANSLATED]
+    // Get chunk data (now/last); steady state hits the memo fast path, otherwise look up the map
+    std::pair<RtmpPacket::Ptr, RtmpPacket::Ptr> &getChunkData(int chunk_id);
     // 循环池  [AUTO-TRANSLATED:cf2e86c5]
     // Thread pool
     toolkit::ResourcePool<toolkit::BufferRaw> _packet_pool;

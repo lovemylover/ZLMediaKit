@@ -107,6 +107,13 @@ void RtmpProtocol::reset() {
     _band_limit_type = 2;
     ////////////Chunk////////////
     _map_chunk_data.clear();
+    //memo保存的是上面map节点内元素地址，clear后必须同步失效  [AUTO-TRANSLATED]
+    //The memo stores addresses of elements inside the above map nodes, so clear it in sync
+    for (auto &m : _chunk_memo) {
+        m.chunk_id = -1;
+        m.pr = nullptr;
+    }
+    _chunk_memo_next = 0;
     _now_stream_index = 0;
     _now_chunk_id = 0;
     //////////Invoke Request//////////
@@ -673,6 +680,19 @@ const char* RtmpProtocol::handle_C2(const char *data, size_t len) {
 
 static constexpr size_t HEADER_LENGTH[] = {12, 8, 4, 1};
 
+inline std::pair<RtmpPacket::Ptr, RtmpPacket::Ptr> &RtmpProtocol::getChunkData(int chunk_id) {
+    for (auto &m : _chunk_memo) {
+        if (m.chunk_id == chunk_id && m.pr) {
+            return *m.pr;
+        }
+    }
+    auto &pr = _map_chunk_data[chunk_id];
+    auto &slot = _chunk_memo[_chunk_memo_next++ & 1];
+    slot.chunk_id = chunk_id;
+    slot.pr = &pr;
+    return pr;
+}
+
 const char* RtmpProtocol::handle_rtmp(const char *data, size_t len) {
     auto ptr = data;
     while (len) {
@@ -719,7 +739,7 @@ const char* RtmpProtocol::handle_rtmp(const char *data, size_t len) {
             return ptr;
         }
         header = (RtmpHeader *) (ptr + offset);
-        auto &pr = _map_chunk_data[_now_chunk_id];
+        auto &pr = getChunkData(_now_chunk_id);
         auto &now_packet = pr.first;
         auto &last_packet = pr.second;
         if (!now_packet) {
