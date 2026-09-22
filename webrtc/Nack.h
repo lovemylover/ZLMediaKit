@@ -14,6 +14,7 @@
 #include <set>
 #include <map>
 #include <deque>
+#include <vector>
 #include <unordered_map>
 #include "Rtsp/Rtsp.h"
 #include "Rtcp/RtcpFCI.h"
@@ -47,7 +48,14 @@ private:
 private:
     uint32_t _cache_ms_check = 0;
     std::deque<uint16_t> _nack_cache_seq;
-    std::unordered_map<uint16_t, RtpPacket::Ptr> _nack_cache_pkt;
+    // 环形容量 = next_pow2(max_rtp_cache_size)  [AUTO-TRANSLATED:00000000]
+    // Ring capacity = next_pow2(max_rtp_cache_size)
+    size_t _ring_capacity = 0;
+    // = _ring_capacity - 1
+    size_t _ring_mask = 0;
+    // 预分配环形数组  [AUTO-TRANSLATED:00000001]
+    // Pre-allocated ring array
+    std::vector<RtpPacket::Ptr> _ring;
 };
 
 class NackContext {

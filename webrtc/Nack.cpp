@@ -61,15 +61,35 @@ static onceToken token([]() {
 
 } // namespace Rtc
 
+static size_t nextPow2(uint32_t v) {
+    if (v < 1024) {
+        v = 1024;
+    }
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    v++;
+    return v;
+}
+
 void NackList::pushBack(RtpPacket::Ptr rtp) {
     GET_CONFIG(uint32_t, max_rtp_cache_ms, Rtc::kMaxRtpCacheMS);
     GET_CONFIG(uint32_t, max_rtp_cache_size, Rtc::kMaxRtpCacheSize);
+
+    if (_ring_capacity == 0) {
+        _ring_capacity = nextPow2(max_rtp_cache_size);
+        _ring_mask = _ring_capacity - 1;
+        _ring.resize(_ring_capacity);
+    }
 
     // 记录rtp  [AUTO-TRANSLATED:f08e12e2]
     // Record rtp
     auto seq = rtp->getSeq();
     _nack_cache_seq.emplace_back(seq);
-    _nack_cache_pkt.emplace(seq, std::move(rtp));
+    _ring[seq & _ring_mask] = std::move(rtp);
 
     // 限制rtp缓存最大个数  [AUTO-TRANSLATED:a6bb50f5]
     // Limit the maximum number of rtp cache
@@ -109,16 +129,19 @@ void NackList::popFront() {
     if (_nack_cache_seq.empty()) {
         return;
     }
-    _nack_cache_pkt.erase(_nack_cache_seq.front());
+    _ring[_nack_cache_seq.front() & _ring_mask] = nullptr;
     _nack_cache_seq.pop_front();
 }
 
 RtpPacket::Ptr *NackList::getRtp(uint16_t seq) {
-    auto it = _nack_cache_pkt.find(seq);
-    if (it == _nack_cache_pkt.end()) {
+    if (_ring_capacity == 0) {
         return nullptr;
     }
-    return &it->second;
+    auto &slot = _ring[seq & _ring_mask];
+    if (!slot || slot->getSeq() != seq) {
+        return nullptr;
+    }
+    return &slot;
 }
 
 uint32_t NackList::getCacheMS() {
@@ -146,13 +169,16 @@ uint32_t NackList::getCacheMS() {
 }
 
 int64_t NackList::getNtpStamp(uint16_t seq) {
-    auto it = _nack_cache_pkt.find(seq);
-    if (it == _nack_cache_pkt.end()) {
+    if (_ring_capacity == 0) {
+        return -1;
+    }
+    auto &slot = _ring[seq & _ring_mask];
+    if (!slot || slot->getSeq() != seq) {
         return -1;
     }
     // 使用ntp时间戳，不会回退  [AUTO-TRANSLATED:2d509f8f]
     // Use ntp timestamp, will not roll back
-    return it->second->getStampMS(true);
+    return slot->getStampMS(true);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
