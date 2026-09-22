@@ -1,0 +1,22 @@
+webrtc/WebRtcTransport.h
+  s_beedcf0683f87a::t_f8b6e37941cca9 284-287
+webrtc/WebRtcTransport.cpp
+  s_beedcf0683f87a::t_aec94408a3645a 1393-1404
+  s_beedcf0683f87a::t_208de11feaa34d 1418-1432
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "3a1a2758f170eac2934fefe52b964157c9e49957",
+  "prompts": {},
+  "sessions": {
+    "s_beedcf0683f87a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "318278ac-de3b-4a4a-8e00-81f7ddb90e6f",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
