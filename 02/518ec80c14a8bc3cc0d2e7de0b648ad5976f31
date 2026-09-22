@@ -1,0 +1,27 @@
+webrtc/TwccContext.h
+  s_90c79079fc1ade::t_8465ce1403eb19 15-16
+  s_90c79079fc1ade::t_3c3e3441462559 44-47
+webrtc/TwccContext.cpp
+  s_90c79079fc1ade::t_a96d13b203f3d3 12,17-22
+  s_90c79079fc1ade::t_1ba2d78d738571 100
+  s_90c79079fc1ade::t_7af48a27376189 113-114,117,125-128
+  s_90c79079fc1ade::t_b9d683472dc90f 81
+  s_90c79079fc1ade::t_9b7ad19e56b43d 38-50,54,56-58
+  s_90c79079fc1ade::t_680641ac26262c 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "02518ec80c14a8bc3cc0d2e7de0b648ad5976f31",
+  "prompts": {},
+  "sessions": {
+    "s_90c79079fc1ade": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c582f862-ddc5-4a42-9131-5f2a2a62c3f1",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
