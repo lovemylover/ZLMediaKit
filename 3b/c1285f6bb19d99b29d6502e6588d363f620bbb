@@ -1,0 +1,25 @@
+src/Common/MultiMediaSourceMuxer.cpp
+  s_e2236db30d0468::t_1c236307dcd2a1 888-890
+src/Extension/Frame.cpp
+  s_e2236db30d0468::t_3d9ed01d6e9c47 53-57
+  s_e2236db30d0468::t_81850a5d7714c6 50-52
+src/Extension/Frame.h
+  s_e2236db30d0468::t_c1784862435062 542-560
+  s_e2236db30d0468::t_b229d66908d1ef 578-581,583-584
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "3bc1285f6bb19d99b29d6502e6588d363f620bbb",
+  "prompts": {},
+  "sessions": {
+    "s_e2236db30d0468": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "26dd3607-9d44-4176-80cc-5865b17b804c",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
