@@ -211,6 +211,16 @@ void NackContext::received(uint16_t seq, bool is_rtx) {
         return;
     }
 
+    // 稳态快路径：_seq为空(无丢包等待)且收到期望的下一个seq，直接推进_nack_seq，
+    // 跳过set的emplace(malloc节点)+clear(free节点)。
+    // 等价于原流程：emplace→{seq}→max=min=seq→diff=0→连续分支clear+_nack_seq=max_seq
+    // Steady-state fast path: _seq is empty (no loss pending) and the expected next seq arrives,
+    // advance _nack_seq directly, skipping the set emplace(malloc)/clear(free).
+    if (_seq.empty() && seq == (uint16_t)(_nack_seq + 1)) {
+        _nack_seq = seq;
+        return;
+    }
+
     auto pr = _seq.emplace(seq);
     if (!pr.second) {
         // seq重复, 忽略  [AUTO-TRANSLATED:95ec10db]
