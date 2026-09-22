@@ -1,0 +1,26 @@
+webrtc/RtpExt.h
+  s_3a171de1abb95c::t_fd3d09c92dd2e3 17-18
+  s_3a171de1abb95c::t_815d7194394f56 58-59,63-65
+  s_3a171de1abb95c::t_db983b92d70a33 148-152
+webrtc/RtpExt.cpp
+  s_3a171de1abb95c::t_8349b69396d071 225-254
+  s_3a171de1abb95c::t_899868abe99465 151-179
+  s_3a171de1abb95c::t_98502f5dc0c63c 623-625
+  s_3a171de1abb95c::t_7276c8ec6f4f64 647-652,666-667,691-692,695,698,703-705,709
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "ceaf17218b4f55d779876a9e65f06eb56633cdb5",
+  "prompts": {},
+  "sessions": {
+    "s_3a171de1abb95c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72f0cb24-50d9-4967-bce4-190fb5c5dc25",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
