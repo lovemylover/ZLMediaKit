@@ -1,0 +1,35 @@
+src/Rtsp/RtspPusher.h
+  s_6a2b62a62c6d31::t_956006b48c3400 23
+  s_6a2b62a62c6d31::t_c6e0f2fd122185 108-110
+src/Rtsp/RtspPusher.cpp
+  s_6a2b62a62c6d31::t_f4aec6d5d4684c 425-428,437-440
+  s_6a2b62a62c6d31::t_dbf80d4ec14e61 13,24-25
+  s_6a2b62a62c6d31::t_72a97e736b70f9 26
+src/Rtsp/RtspSession.cpp
+  s_6a2b62a62c6d31::t_73d2ae0a13b090 18,27-28
+  s_6a2b62a62c6d31::t_7aa63cee3eb300 1265-1268,1278-1281
+  s_6a2b62a62c6d31::t_0b20acb916ef4d 29
+src/Rtsp/RtpMultiCaster.cpp
+  s_6a2b62a62c6d31::t_8a2aa90d36e60e 150-153,156-159
+  s_6a2b62a62c6d31::t_052a921c3d3cee 15,25-26
+  s_6a2b62a62c6d31::t_8eae49c5eceb62 27
+src/Rtsp/RtspSession.h
+  s_6a2b62a62c6d31::t_3242b5956dde9e 18-19,30-59
+  s_6a2b62a62c6d31::t_26e26b7fc868fb 304-307
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "c027c927cdc47b292b710a81e8da0fab4cac3de5",
+  "prompts": {},
+  "sessions": {
+    "s_6a2b62a62c6d31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6ece4314-400a-4685-b73d-03fb218a0f24",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
