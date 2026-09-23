@@ -623,9 +623,27 @@ void RtspPlayer::onRtpPacket(const char *data, size_t len) {
     if (interleaved % 2 == 0) {
         CHECK(len > RtpPacket::kRtpHeaderSize + RtpPacket::kRtpTcpHeaderSize);
         RtpHeader *header = (RtpHeader *)(data + RtpPacket::kRtpTcpHeaderSize);
-        trackIdx = getTrackIndexByPT(header->pt);
+        // 2 槽 PT memo 快路径：SDP 协商后 PT 不变，命中时跳过线性扫描
+        for (int i = 0; i < 2; ++i) {
+            if (_pt_cache_key[i] == header->pt) {
+                trackIdx = _pt_cache_val[i];
+                break;
+            }
+        }
         if (trackIdx == -1) {
-            return;
+            trackIdx = getTrackIndexByPT(header->pt);
+            if (trackIdx >= 0) {
+                // 填入空闲槽或覆盖已存在的同 PT 槽
+                for (int i = 0; i < 2; ++i) {
+                    if (_pt_cache_key[i] == -1 || _pt_cache_key[i] == header->pt) {
+                        _pt_cache_key[i] = header->pt;
+                        _pt_cache_val[i] = trackIdx;
+                        break;
+                    }
+                }
+            } else {
+                return;
+            }
         }
         handleOneRtp(
             trackIdx, _sdp_track[trackIdx]->_type, _sdp_track[trackIdx]->_samplerate, (uint8_t *)data + RtpPacket::kRtpTcpHeaderSize,

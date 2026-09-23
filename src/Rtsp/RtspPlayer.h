@@ -162,6 +162,9 @@ private:
     // Rtsp start speed
     float _speed = 0.0f;
     std::vector<SdpTrack::Ptr> _sdp_track;
+    // PT → track 索引的 2 槽 memo，消除每包线性扫描（SDP 协商后 PT 不变，同 GB28181/WebRTC 先例）
+    int _pt_cache_key[2] = { -1, -1 };
+    int _pt_cache_val[2] = { -1, -1 };
     std::function<void(const Parser&)> _on_response;
     std::function<void(const Parser&)> _on_keepalive_reponse;
  protected:   
