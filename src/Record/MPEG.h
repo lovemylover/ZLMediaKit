@@ -101,6 +101,8 @@ private:
         FrameMergerImp merger;
     };
     std::unordered_map<int, MP4Track> _tracks;
+    // 2槽memo缓存，避免每帧unordered_map查找（index常规仅0/1）  [AUTO-TRANSLATED:SKIP]
+    MP4Track *_track_memo[2] = {nullptr, nullptr};
     toolkit::BufferRaw::Ptr _current_buffer;
     toolkit::ResourcePool<toolkit::BufferRaw> _buffer_pool;
 };

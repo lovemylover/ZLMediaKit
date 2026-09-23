@@ -41,28 +41,42 @@ bool MpegMuxer::addTrack(const Track::Ptr &track) {
         _have_video = true;
     }
     _tracks[track->getIndex()].track_id = mpeg_muxer_add_stream((::mpeg_muxer_t *)_context, mpeg_id, nullptr, 0);
+    if (track->getIndex() >= 0 && track->getIndex() < 2) {
+        _track_memo[track->getIndex()] = nullptr;
+    }
     return true;
 }
 
 bool MpegMuxer::inputFrame(const Frame::Ptr &frame) {
-    auto it = _tracks.find(frame->getIndex());
-    if (it == _tracks.end()) {
-        return false;
+    auto index = frame->getIndex();
+    MP4Track *track = nullptr;
+    if (index >= 0 && index < 2) {
+        track = _track_memo[index];
     }
-    auto &track = it->second;
+    if (!track) {
+        auto it = _tracks.find(index);
+        if (it == _tracks.end()) {
+            return false;
+        }
+        track = &it->second;
+        if (index >= 0 && index < 2) {
+            _track_memo[index] = track;
+        }
+    }
+    auto &track_ref = *track;
     _key_pos = !_have_video;
     switch (frame->getCodecId()) {
         case CodecH264:
         case CodecH265: {
             // 这里的代码逻辑是让SPS、PPS、IDR这些时间戳相同的帧打包到一起当做一个帧处理，  [AUTO-TRANSLATED:edf57c32]
             // The code logic here is to package frames with the same timestamp, such as SPS, PPS, and IDR, together as one frame.
-            return track.merger.inputFrame(frame, [this, &track](uint64_t dts, uint64_t pts, const Buffer::Ptr &buffer, bool have_idr) {
+            return track_ref.merger.inputFrame(frame, [this, &track_ref](uint64_t dts, uint64_t pts, const Buffer::Ptr &buffer, bool have_idr) {
                 _key_pos = have_idr;
                 // 取视频时间戳为TS的时间戳  [AUTO-TRANSLATED:5ff7796d]
                 // Take the video timestamp as the TS timestamp.
                 _timestamp = dts;
                 _max_cache_size = 512 + 1.2 * buffer->size();
-                mpeg_muxer_input((::mpeg_muxer_t *)_context, track.track_id, have_idr ? 0x0001 : 0, pts * 90LL, dts * 90LL, buffer->data(), buffer->size());
+                mpeg_muxer_input((::mpeg_muxer_t *)_context, track_ref.track_id, have_idr ? 0x0001 : 0, pts * 90LL, dts * 90LL, buffer->data(), buffer->size());
                 flushCache();
             });
         }
@@ -83,7 +97,7 @@ bool MpegMuxer::inputFrame(const Frame::Ptr &frame) {
                 _timestamp = frame->dts();
             }
             _max_cache_size = 512 + 1.2 * frame->size();
-            mpeg_muxer_input((::mpeg_muxer_t *)_context, track.track_id, frame->keyFrame() ? 0x0001 : 0, frame->pts() * 90LL, frame->dts() * 90LL, frame->data(), frame->size());
+            mpeg_muxer_input((::mpeg_muxer_t *)_context, track_ref.track_id, frame->keyFrame() ? 0x0001 : 0, frame->pts() * 90LL, frame->dts() * 90LL, frame->data(), frame->size());
             flushCache();
             return true;
         }
@@ -92,6 +106,7 @@ bool MpegMuxer::inputFrame(const Frame::Ptr &frame) {
 
 void MpegMuxer::resetTracks() {
     _have_video = false;
+    _track_memo[0] = _track_memo[1] = nullptr;
     // 通知片段中断  [AUTO-TRANSLATED:ed3d87ba]
     // Notify fragment interruption.
     onWrite(nullptr, _timestamp, false);
