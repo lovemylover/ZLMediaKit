@@ -1,0 +1,19 @@
+src/Rtmp/FlvMuxer.cpp
+  s_c55eb7061c5ddc::t_424565904c362f 140-151
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "d394ec747ec2c0b600772528fee5bcdbe48d20e0",
+  "prompts": {},
+  "sessions": {
+    "s_c55eb7061c5ddc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fe939dd7-ddb3-4c99-9738-6a7b6a1d7365",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
