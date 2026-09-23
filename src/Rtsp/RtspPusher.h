@@ -61,6 +61,8 @@ private:
 
     int getTrackIndexByInterleaved(int interleaved) const;
     int getTrackIndexByTrackType(TrackType type) const;
+    // track type -> index memo 快路径，miss 时回退 getTrackIndexByTrackType 并回填
+    int getTrackIndexByTypeMemo(TrackType type);
 
     void sendRtpPacket(const RtspMediaSource::RingDataType & pkt) ;
     void sendRtspRequest(const std::string &cmd, const std::string &url ,const StrCaseMap &header = StrCaseMap(),const std::string &sdp = "" );
@@ -83,6 +85,8 @@ private:
     std::string _content_base;
     SdpParser _sdp_parser;
     std::vector<SdpTrack::Ptr> _track_vec;
+    // track type -> index 2槽 memo，消除转推每包线性扫描
+    int _track_idx_by_type[2] = { -1, -1 };
     // RTP端口,trackid idx 为数组下标  [AUTO-TRANSLATED:77c186bb]
     // RTP port, trackid idx is the array index
     toolkit::Socket::Ptr _rtp_sock[2];

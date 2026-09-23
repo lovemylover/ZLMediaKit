@@ -50,6 +50,9 @@ void RtspPusher::teardown() {
     _nonce.clear();
     _realm.clear();
     _track_vec.clear();
+    // track 变更，memo 失效
+    _track_idx_by_type[0] = -1;
+    _track_idx_by_type[1] = -1;
     _session_id.clear();
     _content_base.clear();
     _cseq = 1;
@@ -188,6 +191,15 @@ void RtspPusher::sendAnnounce() {
         throw std::runtime_error("无有效的Sdp Track");
     }
     _rtcp_context.clear();
+    // 失效旧 memo，填充新 memo
+    _track_idx_by_type[0] = -1;
+    _track_idx_by_type[1] = -1;
+    for (size_t i = 0; i < _track_vec.size(); ++i) {
+        auto type = _track_vec[i]->_type;
+        if (type == TrackVideo || type == TrackAudio) {
+            _track_idx_by_type[type] = (int)i;
+        }
+    }
     for (auto &track : _track_vec) {
         _rtcp_context.emplace_back(std::make_shared<RtcpContextForSend>());
     }
@@ -370,8 +382,21 @@ void RtspPusher::sendOptions() {
     sendRtspRequest("OPTIONS", _content_base);
 }
 
+int RtspPusher::getTrackIndexByTypeMemo(TrackType type) {
+    // memo 快路径：整数比较，命中则跳过线性扫描
+    int idx = type >= 0 && type <= 1 ? _track_idx_by_type[type] : -1;
+    if (idx < 0) {
+        // miss: 回退线性扫描，找不到时抛异常（不回填）
+        idx = getTrackIndexByTrackType(type);
+        if (type >= 0 && type <= 1) {
+            _track_idx_by_type[type] = idx;
+        }
+    }
+    return idx;
+}
+
 void RtspPusher::updateRtcpContext(const RtpPacket::Ptr &rtp){
-    int track_index = getTrackIndexByTrackType(rtp->type);
+    int track_index = getTrackIndexByTypeMemo(rtp->type);
     auto &ticker = _rtcp_send_ticker[track_index];
     auto &rtcp_ctx = _rtcp_context[track_index];
     rtcp_ctx->onRtp(rtp->getSeq(), rtp->getStamp(), rtp->ntp_stamp, rtp->sample_rate, rtp->size() - RtpPacket::kRtpTcpHeaderSize);
@@ -428,7 +453,7 @@ void RtspPusher::sendRtpPacket(const RtspMediaSource::RingDataType &pkt) {
             });
             pkt->for_each([&](const RtpPacket::Ptr &rtp) {
                 updateRtcpContext(rtp);
-                int iTrackIndex = getTrackIndexByTrackType(rtp->type);
+                int iTrackIndex = getTrackIndexByTypeMemo(rtp->type);
                 auto &pSock = _rtp_sock[iTrackIndex];
                 if (!pSock) {
                     shutdown(SockException(Err_shutdown, "udp sock not opened yet"));
