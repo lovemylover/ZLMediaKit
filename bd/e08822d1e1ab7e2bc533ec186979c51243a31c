@@ -1,0 +1,21 @@
+src/Rtsp/RtspPlayer.cpp
+  s_034e9693db81fc::t_9bdab4bcae98c6 626-632,634-646
+src/Rtsp/RtspPlayer.h
+  s_034e9693db81fc::t_353fb156e7d843 165-167
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "bde08822d1e1ab7e2bc533ec186979c51243a31c",
+  "prompts": {},
+  "sessions": {
+    "s_034e9693db81fc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "56fb87e6-9870-4467-b798-508d1c5cbeac",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
