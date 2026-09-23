@@ -785,7 +785,9 @@ public:
             }
         }
         _delegates.emplace_back(std::move(delegate));
-        _delegates_dirty = true;
+        // 即时创建新快照并原子发布，消除 _delegates_dirty 延迟重建
+        DelegateVectorPtr new_snap = std::make_shared<DelegateVector>(_delegates);
+        std::atomic_store_explicit(&_delegates_snap, new_snap, std::memory_order_release);
         return ptr;
     }
 
@@ -804,7 +806,8 @@ public:
                                             return item.get() == ptr;
                                         }),
                          _delegates.end());
-        _delegates_dirty = true;
+        DelegateVectorPtr new_snap = std::make_shared<DelegateVector>(_delegates);
+        std::atomic_store_explicit(&_delegates_snap, new_snap, std::memory_order_release);
     }
 
     /**
@@ -816,19 +819,9 @@ public:
     bool inputFrame(const Frame::Ptr &frame) override {
         doStatistics(frame);
         bool ret = false;
-        DelegateVectorPtr delegates_snap;
-        {
-            std::lock_guard<std::mutex> lck(_mtx);
-            if (_delegates_dirty) {
-                // 仅在代理列表变化时重建快照（copy-on-write），避免每帧深拷贝  [AUTO-TRANSLATED:5a83c1de]
-                // Only rebuild the snapshot when the delegate list changes (copy-on-write), avoiding a deep copy per frame
-                _delegates_snap = std::make_shared<DelegateVector>(_delegates);
-                _delegates_dirty = false;
-            }
-            delegates_snap = _delegates_snap;
-        }
-        // 快照发布后不再修改，因此可以脱离锁遍历  [AUTO-TRANSLATED:9f0b2d41]
-        // The published snapshot is immutable, so it can be iterated without holding the lock
+        // 无锁原子读取快照，避免每帧互斥锁开销
+        // Lock-free atomic snapshot read, avoiding per-frame mutex overhead
+        auto delegates_snap = std::atomic_load_explicit(&_delegates_snap, std::memory_order_acquire);
         if (delegates_snap) {
             for (auto &item : *delegates_snap) {
                 if (item->inputFrame(frame)) {
@@ -853,7 +846,8 @@ public:
     void clear() {
         std::lock_guard<std::mutex> lck(_mtx);
         _delegates.clear();
-        _delegates_dirty = true;
+        DelegateVectorPtr new_snap = std::make_shared<DelegateVector>();
+        std::atomic_store_explicit(&_delegates_snap, new_snap, std::memory_order_release);
     }
 
     /**
@@ -921,10 +915,9 @@ private:
     Stamp _stamp;
     mutable std::mutex _mtx;
     DelegateVector _delegates;
-    // 代理列表的只读快照，代理变化时才重建  [AUTO-TRANSLATED:3d7e91b4]
-    // Read-only snapshot of the delegate list, rebuilt only when delegates change
+    // 代理列表的只读快照，通过 atomic_load/store 无锁发布  [AUTO-TRANSLATED:3d7e91b4]
+    // Read-only snapshot of the delegate list, published lock-free via atomic_load/store
     DelegateVectorPtr _delegates_snap;
-    bool _delegates_dirty = true;
 };
 
 } // namespace mediakit
