@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <functional>
 #include <unordered_map>
+#include <atomic>
 #include "json/json.h"
 #include "Util/Byte.hpp"
 #include "Poller/Timer.h"
@@ -220,26 +221,58 @@ public:
                 _relayed_addr = std::make_shared<sockaddr_storage>();
                 memcpy(_relayed_addr.get(), that._relayed_addr.get(), sizeof(sockaddr_storage));
             }
+            _peer_addr_state.store(0, std::memory_order_relaxed);
+            _sock_type_state.store(0, std::memory_order_relaxed);
         }
         virtual ~Pair() = default;
 
         void get_peer_addr(sockaddr_storage &peer_addr) const {
+            // 快速路径：缓存命中
+            if (_peer_addr_state.load(std::memory_order_acquire) == 2) {
+                peer_addr = _cached_peer_addr;
+                return;
+            }
+            // 慢速路径：本地计算
+            sockaddr_storage local_addr;
             if (!_peer_host.empty()) {
-                peer_addr = toolkit::SockUtil::make_sockaddr(_peer_host.data(), _peer_port);
+                local_addr = toolkit::SockUtil::make_sockaddr(_peer_host.data(), _peer_port);
             } else {
                 auto addr = _socket->get_peer_addr();
                 if (addr->sa_family == AF_INET6 && IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)addr)->sin6_addr)) {
-                    memset(&peer_addr, 0, sizeof(peer_addr));
+                    memset(&local_addr, 0, sizeof(local_addr));
                     // 转换IPv6 v4mapped地址为IPv4地址
                     struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *)addr;
-                    struct sockaddr_in *addr4 = (struct sockaddr_in *)&peer_addr;
+                    struct sockaddr_in *addr4 = (struct sockaddr_in *)&local_addr;
                     addr4->sin_family = AF_INET;
                     addr4->sin_port = addr6->sin6_port;
                     memcpy(&addr4->sin_addr, &addr6->sin6_addr.s6_addr[12], 4);
                 } else {
-                    memcpy(&peer_addr, addr, toolkit::SockUtil::get_sock_len(addr));
+                    memcpy(&local_addr, addr, toolkit::SockUtil::get_sock_len(addr));
                 }
             }
+            // CAS 尝试写入缓存：0→1 成功者写入并置 2
+            int expected = 0;
+            if (_peer_addr_state.compare_exchange_strong(expected, 1,
+                    std::memory_order_acq_rel)) {
+                _cached_peer_addr = local_addr;
+                _peer_addr_state.store(2, std::memory_order_release);
+            }
+            // 无论是否抢到写权，都返回本地计算结果
+            peer_addr = local_addr;
+        }
+
+        bool is_tcp() const {
+            if (_sock_type_state.load(std::memory_order_acquire) == 2) {
+                return _is_tcp;
+            }
+            bool tcp = _socket && _socket->getSock() &&
+                       _socket->getSock()->sockType() == toolkit::SockNum::Sock_TCP;
+            int expected = 0;
+            if (_sock_type_state.compare_exchange_strong(expected, 1, std::memory_order_acq_rel)) {
+                _is_tcp = tcp;
+                _sock_type_state.store(2, std::memory_order_release);
+            }
+            return tcp;
         }
 
         bool get_relayed_addr(sockaddr_storage &peerAddr) const {
@@ -301,6 +334,13 @@ public:
 
         //中继后地址，用于实现TURN转发地址，当该地址不为空时，该地址为真正的peer地址,_peer_host和_peer_port表示中继地址
         std::shared_ptr<sockaddr_storage> _relayed_addr;
+
+        // 惰性缓存的 peer 地址（连接期间不变）
+        mutable std::atomic<int> _peer_addr_state{0};   // 0=未缓存 1=计算中 2=已缓存
+        mutable sockaddr_storage _cached_peer_addr{};
+        // 惰性缓存的 socket 类型（连接期间不变）
+        mutable std::atomic<int> _sock_type_state{0};   // 0=未缓存 1=计算中 2=已缓存
+        mutable bool _is_tcp = false;
     };
 
     class Listener {

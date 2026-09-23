@@ -177,7 +177,7 @@ void IceTransport::sendSocketData_l(const Buffer::Ptr& buf, const Pair::Ptr& pai
 
     // 一次性发送一帧的rtp数据，提高网络io性能  [AUTO-TRANSLATED:fbab421e]
     // Send one frame of rtp data at a time to improve network io performance
-    if (pair->_socket->getSock()->sockType() == SockNum::Sock_TCP) {
+    if (pair->is_tcp()) {
         // 增加tcp两字节头
         uint16_t len = htons(buf->size());
         pair->_socket->SockSender::send((char *)&len, 2);
