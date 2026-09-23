@@ -126,7 +126,15 @@ private:
         RtpCodec::Ptr encoder;
     };
 
+    // 获取 track 对应的 TrackInfo，优先命中 memo，miss 时回退哈希查找并回填
+    // 注意保持 operator[] 语义：不存在时插入默认构造的 TrackInfo
+    TrackInfo &getTrackInfo(int index);
+
     std::unordered_map<int, TrackInfo> _tracks;
+    // track_index -> TrackInfo 双槽 memo，消除每包哈希查找
+    TrackInfo *_track_memo[2] = { nullptr, nullptr };
+    int _track_memo_key[2] = { -1, -1 };
+    size_t _track_memo_next = 0;
     RtpRing::RingType::Ptr _rtpRing;
     RtpRing::RingType::Ptr _rtpInterceptor;
 };

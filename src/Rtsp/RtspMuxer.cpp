@@ -17,9 +17,24 @@ using namespace toolkit;
 
 namespace mediakit {
 
+RtspMuxer::TrackInfo &RtspMuxer::getTrackInfo(int index) {
+    // 双槽 memo 快路径：整数比较，命中则跳过哈希查找
+    for (size_t i = 0; i < 2; ++i) {
+        if (_track_memo_key[i] == index && _track_memo[i]) {
+            return *_track_memo[i];
+        }
+    }
+    // miss: 回退 operator[]（保持插入默认值语义），回填一个槽位
+    auto &ref = _tracks[index];
+    size_t slot_idx = _track_memo_next++ & 1;
+    _track_memo[slot_idx] = &ref;
+    _track_memo_key[slot_idx] = index;
+    return ref;
+}
+
 void RtspMuxer::onRtp(RtpPacket::Ptr in, bool is_key) {
     if (_live) {
-        auto &ref = _tracks[in->track_index];
+        auto &ref = getTrackInfo(in->track_index);
         if (ref.rtp_stamp != in->getHeader()->stamp) {
             // rtp时间戳变化才计算ntp，节省cpu资源  [AUTO-TRANSLATED:729d54f2]
             // Only calculate NTP when the RTP timestamp changes, saving CPU resources
@@ -71,6 +86,11 @@ bool RtspMuxer::addTrack(const Track::Ptr &track) {
     }
 
     auto &ref = _tracks[track->getIndex()];
+    // 插入可能触发 rehash，此前缓存的指针全部失效
+    _track_memo[0] = nullptr;
+    _track_memo[1] = nullptr;
+    _track_memo_key[0] = -1;
+    _track_memo_key[1] = -1;
     auto &encoder = ref.encoder;
     CHECK(!encoder);
 
@@ -150,7 +170,7 @@ void RtspMuxer::trySyncTrack() {
 }
 
 bool RtspMuxer::inputFrame(const Frame::Ptr &frame) {
-    auto &encoder = _tracks[frame->getIndex()].encoder;
+    auto &encoder = getTrackInfo(frame->getIndex()).encoder;
     return encoder ? encoder->inputFrame(frame) : false;
 }
 
@@ -173,6 +193,11 @@ RtpRing::RingType::Ptr RtspMuxer::getRtpRing() const {
 void RtspMuxer::resetTracks() {
     _sdp.clear();
     _tracks.clear();
+    // 清空后节点全部销毁，memo 指针全部悬空
+    _track_memo[0] = nullptr;
+    _track_memo[1] = nullptr;
+    _track_memo_key[0] = -1;
+    _track_memo_key[1] = -1;
     CLEAR_ARR(_track_existed);
 }
 
