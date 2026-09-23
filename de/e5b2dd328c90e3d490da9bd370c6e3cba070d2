@@ -1,0 +1,19 @@
+src/Rtp/RtpSender.cpp
+  s_a806761a3c4d0a::t_0774538e09c4b9 446-455,478-484,486
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "dee5b2dd328c90e3d490da9bd370c6e3cba070d2",
+  "prompts": {},
+  "sessions": {
+    "s_a806761a3c4d0a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "85385484-ab5b-4c42-8eb8-9a3a9ab6f584",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
