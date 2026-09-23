@@ -1,0 +1,25 @@
+src/Rtp/RtpSender.h
+  s_ce24333a37515d::t_4d0a18b4b7222e 162-164
+  s_ce24333a37515d::t_c7fd845189d261 20-21,27-54
+  s_ce24333a37515d::t_e521ebad2cc5de 55
+src/Rtp/RtpSender.cpp
+  s_ce24333a37515d::t_2ce46f984ee606 26-27
+  s_ce24333a37515d::t_51dea7c153838a 417-418,423,426-445,447-455,458-460,462-468
+  s_ce24333a37515d::t_ba6c0a1cd7fd6e 25,29-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "a7104afd2e395afd715111d3b7a0e966eb0097da",
+  "prompts": {},
+  "sessions": {
+    "s_ce24333a37515d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e98c5ed9-5463-420b-89b0-e728229bac85",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
