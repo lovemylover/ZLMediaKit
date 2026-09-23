@@ -1,0 +1,23 @@
+src/Record/MPEG.h
+  s_c55eb7061c5ddc::t_d8bdfa83f6e0d2 104-105
+src/Record/MPEG.cpp
+  s_c55eb7061c5ddc::t_771b68ddb94b81 44-46
+  s_c55eb7061c5ddc::t_303e0bdd0f3e2f 109
+  s_c55eb7061c5ddc::t_6bebb9d051f406 51-64,66,73,79,100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "943e2862eb61e3d0949188ce95173b31ff0e5ba2",
+  "prompts": {},
+  "sessions": {
+    "s_c55eb7061c5ddc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fe939dd7-ddb3-4c99-9738-6a7b6a1d7365",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
