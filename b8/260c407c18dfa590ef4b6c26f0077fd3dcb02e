@@ -1,0 +1,36 @@
+src/Rtsp/RtspMuxer.h
+  s_75f7cd80082e13::t_fef2fbdfc88cf4 129-131
+  s_75f7cd80082e13::t_cf11f6296f6753 134-137
+  s_6b2649e7939ec7::t_674fe734b55e48 132
+src/Rtsp/RtspMuxer.cpp
+  s_75f7cd80082e13::t_f72312349699e9 37
+  s_75f7cd80082e13::t_7f8bde8ed10420 29-31
+  s_75f7cd80082e13::t_e6ac97c4542a4e 20-28,32-34
+  s_75f7cd80082e13::t_a8467e98fcfa34 196-200
+  s_75f7cd80082e13::t_135509147f54e6 89-93
+  s_75f7cd80082e13::t_78357933be1550 173
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "b8260c407c18dfa590ef4b6c26f0077fd3dcb02e",
+  "prompts": {},
+  "sessions": {
+    "s_6b2649e7939ec7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5499b4fa-4cf6-4e0a-9b04-46bf55556686",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    },
+    "s_75f7cd80082e13": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "12c55fe8-12e0-4884-b06a-2dfc7a7dfa04",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
