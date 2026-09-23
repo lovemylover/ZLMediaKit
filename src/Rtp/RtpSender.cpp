@@ -22,7 +22,14 @@ using namespace toolkit;
 
 namespace mediakit{
 
+// 对象池静态成员定义
+ResourcePool<BufferRtpPoolable> RtpSender::_buffer_pool;
+
 RtpSender::RtpSender(EventPoller::Ptr poller) {
+    // 对象池预热，只执行一次
+    static onceToken s_pool_init([]() {
+        _buffer_pool.setSize(1024);
+    });
     _poller = poller ? std::move(poller) : EventPollerPool::Instance().getPoller();
     _socket_rtp = Socket::createSocket(_poller, false);
 }
@@ -407,48 +414,58 @@ void RtpSender::onClose(const SockException &ex) {
     }
 }
 
-// 此函数在其他线程执行  [AUTO-TRANSLATED:3569a681]
-// This function is executed in another thread
-void RtpSender::onFlushRtpList(shared_ptr<std::vector<Buffer::Ptr> > rtp_list) {
+// 此函数在其他线程执行
+void RtpSender::onFlushRtpList(shared_ptr<std::vector<Buffer::Ptr>> rtp_list) {
     if (!_is_connect) {
-        // 连接成功后才能发送数据  [AUTO-TRANSLATED:14d00ad5]
-        // Data can only be sent after the connection is successful
         return;
     }
 
-    auto send_func = [this](const shared_ptr<std::vector<Buffer::Ptr> > &rtp_list) {
+    auto send_func = [this](const shared_ptr<std::vector<Buffer::Ptr>> &rtp_list) {
         size_t i = 0;
         auto size = rtp_list->size();
+        // 循环前根据 con_type 一次性确定发送偏移量，避免每包 switch
+        size_t offset = 0;
+        bool is_voice_talk = false;
+        switch (_args.con_type) {
+            case MediaSourceEvent::SendRtpArgs::kUdpActive:
+            case MediaSourceEvent::SendRtpArgs::kUdpPassive:
+                offset = RtpPacket::kRtpTcpHeaderSize;
+                break;
+            case MediaSourceEvent::SendRtpArgs::kTcpActive:
+            case MediaSourceEvent::SendRtpArgs::kTcpPassive:
+                offset = 2;
+                break;
+            case MediaSourceEvent::SendRtpArgs::kVoiceTalk:
+                is_voice_talk = true;
+                break;
+            default:
+                CHECK(0);
+                break;
+        }
+
         for (auto &packet : *rtp_list) {
-            switch (_args.con_type) {
-                case MediaSourceEvent::SendRtpArgs::kUdpActive:
-                case MediaSourceEvent::SendRtpArgs::kUdpPassive: {
-                    onSendRtpUdp(packet, i == 0);
-                    // udp模式，rtp over tcp前4个字节可以忽略  [AUTO-TRANSLATED:5d648f4b]
-                    // UDP mode, the first 4 bytes of rtp over tcp can be ignored
-                    _socket_rtp->send(std::make_shared<BufferRtp>(std::move(packet), RtpPacket::kRtpTcpHeaderSize), nullptr, 0, ++i == size);
+            if (is_voice_talk) {
+                // 语音对讲：socket 来自外部，每包需检查 alive 与类型
+                auto type = _socket_rtp->alive() ? _socket_rtp->sockType() : SockNum::Sock_Invalid;
+                if (type == SockNum::Sock_UDP) {
+                    offset = RtpPacket::kRtpTcpHeaderSize;
+                } else if (type == SockNum::Sock_TCP) {
+                    offset = 2;
+                } else {
+                    onErr(SockException(Err_other, "dst socket disconnected"));
                     break;
                 }
-                case MediaSourceEvent::SendRtpArgs::kTcpActive:
-                case MediaSourceEvent::SendRtpArgs::kTcpPassive: {
-                    // tcp模式, rtp over tcp前2个字节可以忽略,只保留后续rtp长度的2个字节  [AUTO-TRANSLATED:a3bc338a]
-                    // TCP mode, the first 2 bytes of rtp over tcp can be ignored, only the subsequent 2 bytes of rtp length are retained
-                    _socket_rtp->send(std::make_shared<BufferRtp>(std::move(packet), 2), nullptr, 0, ++i == size);
-                    break;
-                }
-                case MediaSourceEvent::SendRtpArgs::kVoiceTalk: {
-                    auto type = _socket_rtp->alive() ? _socket_rtp->sockType() : SockNum::Sock_Invalid;
-                    if (type == SockNum::Sock_UDP) {
-                        _socket_rtp->send(std::make_shared<BufferRtp>(std::move(packet), RtpPacket::kRtpTcpHeaderSize), nullptr, 0, ++i == size);
-                    } else if (type == SockNum::Sock_TCP) {
-                        _socket_rtp->send(std::make_shared<BufferRtp>(std::move(packet), 2), nullptr, 0, ++i == size);
-                    } else {
-                        onErr(SockException(Err_other, "dst socket disconnected"));
-                    }
-                    break;
-                }
-                default: CHECK(0);
+            } else if (offset == RtpPacket::kRtpTcpHeaderSize) {
+                // UDP 模式：首包触发 RTCP 发送检查
+                onSendRtpUdp(packet, i == 0);
             }
+
+            // 从对象池获取发送缓冲，消除每包 make_shared 堆分配
+            auto buf = _buffer_pool.obtain2();
+            buf->assign(std::move(packet), offset);
+            _socket_rtp->send(std::move(buf), nullptr, 0, ++i == size);
+
+            // 保留 TCP 拥塞限流检查
             if (_args.enable_origin_recv_limit && _socket_rtp->sockType() == toolkit::SockNum::Sock_TCP && _socket_rtp->isSocketBusy()) {
                 auto muxer = _muxer.lock();
                 if (muxer) {

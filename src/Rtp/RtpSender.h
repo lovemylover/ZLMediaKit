@@ -17,10 +17,41 @@
 #include "Rtcp/RtcpContext.h"
 #include "Common/MediaSource.h"
 #include "Common/MediaSink.h"
+#include "Util/ResourcePool.h"
+#include "Network/Buffer.h"
 
 namespace mediakit{
 
 class RtpSession;
+
+// 可池化的 RTP 发送缓冲，替代每次 make_shared<BufferRtp> 堆分配
+// 直接继承 Buffer，公开 assign 供对象池复用时重置字段
+class BufferRtpPoolable : public toolkit::Buffer {
+public:
+    using Ptr = std::shared_ptr<BufferRtpPoolable>;
+
+    BufferRtpPoolable() = default;
+
+    // 池化复用时设置底层数据与偏移
+    void assign(toolkit::Buffer::Ptr data, size_t offset) {
+        _data = std::move(data);
+        _offset = offset;
+        _size = _data->size() - _offset;
+    }
+
+    char *data() const override {
+        return _data->data() + _offset;
+    }
+
+    size_t size() const override {
+        return _size;
+    }
+
+private:
+    toolkit::Buffer::Ptr _data;
+    size_t _offset = 0;
+    size_t _size = 0;
+};
 
 // rtp发送客户端，支持发送GB28181协议  [AUTO-TRANSLATED:668038b6]
 // RTP sending client, supporting sending GB28181 protocol
@@ -128,6 +159,9 @@ private:
     std::shared_ptr<RtpSession> _rtp_session;
     std::function<void(const toolkit::SockException &ex)> _on_close;
     std::weak_ptr<MultiMediaSourceMuxer> _muxer;
+    // RTP 发送缓冲对象池，消除每包 make_shared 堆分配
+    // ResourcePool 线程安全，可在 poller 线程间共享
+    static toolkit::ResourcePool<BufferRtpPoolable> _buffer_pool;
 };
 
 }//namespace mediakit
