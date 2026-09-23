@@ -11,7 +11,8 @@
 #ifndef ZLMEDIAKIT_RTPRECEIVER_H
 #define ZLMEDIAKIT_RTPRECEIVER_H
 
-#include <map>
+#include <vector>
+#include <algorithm>
 #include <string>
 #include <memory>
 #include "Rtsp/Rtsp.h"
@@ -26,7 +27,7 @@ template<typename T, typename SEQ = uint16_t>
 class PacketSortor {
 public:
     static constexpr SEQ SEQ_MAX = (std::numeric_limits<SEQ>::max)();
-    using iterator = typename std::map<SEQ, T>::iterator;
+    using iterator = typename std::vector<std::pair<SEQ, T>>::iterator;
 
     virtual ~PacketSortor() = default;
 
@@ -84,7 +85,7 @@ public:
         if (seq < _next_seq && !mayLooped(_next_seq, seq)) {
             // 无回环风险, 缓存seq回退包  [AUTO-TRANSLATED:4200dd1b]
             // No loop risk, cache seq rollback packets
-            _pkt_drop_cache_map.emplace(seq, std::move(packet));
+            sortedEmplace(_pkt_drop_cache_map, seq, std::move(packet));
             if (_pkt_drop_cache_map.size() > _max_distance || _ticker.elapsedTime() > _max_buffer_ms) {
                 // seq回退包太多，可能源端重置seq计数器，这部分数据需要输出  [AUTO-TRANSLATED:d31aead7]
                 // Too many seq rollback packets, the source may reset the seq counter, this part of data needs to be output
@@ -96,7 +97,7 @@ public:
             }
             return;
         }
-        _pkt_sort_cache_map.emplace(seq, std::move(packet));
+        sortedEmplace(_pkt_sort_cache_map, seq, std::move(packet));
 
         if (needForceFlush(seq)) {
             forceFlush(_next_seq);
@@ -117,6 +118,17 @@ public:
     }
 
 private:
+    void sortedEmplace(std::vector<std::pair<SEQ, T>>& vec, SEQ seq, T&& packet) {
+        auto it = std::lower_bound(vec.begin(), vec.end(), seq,
+                                   [](const std::pair<SEQ, T>& p, SEQ s) {
+                                       return p.first < s;
+                                   });
+        if (it != vec.end() && it->first == seq) {
+            return;
+        }
+        vec.insert(it, std::make_pair(seq, std::move(packet)));
+    }
+
     SEQ distance(SEQ seq) {
         SEQ ret;
         if (seq > _next_seq) {
@@ -138,29 +150,23 @@ private:
         if (_pkt_sort_cache_map.empty()) {
             return;
         }
-        // 寻找距离比next_seq大的最近的seq  [AUTO-TRANSLATED:d2de6f5b]
-        // Find the nearest seq that is greater than next_seq
-        auto it = _pkt_sort_cache_map.lower_bound(next_seq);
+        // 寻找距离比next_seq大的最近的seq
+        auto it = std::lower_bound(_pkt_sort_cache_map.begin(), _pkt_sort_cache_map.end(), next_seq,
+                                   [](const std::pair<SEQ, T> &p, SEQ s) { return p.first < s; });
         if (it == _pkt_sort_cache_map.end()) {
-            // 没有比next_seq更大的seq，应该是回环时丢包导致  [AUTO-TRANSLATED:d0d6970b]
-            // There is no seq greater than next_seq, it should be caused by packet loss during loopback
+            // 没有比next_seq更大的seq，应该是回环时丢包导致
             it = _pkt_sort_cache_map.begin();
         }
-        // 丢包无法恢复，把这个包当做next_seq  [AUTO-TRANSLATED:2d8c0b9e]
-        // Packet loss cannot be recovered, treat this packet as next_seq
+        // 丢包无法恢复，把这个包当做next_seq
         popIterator(it);
-        // 清空连续包列表  [AUTO-TRANSLATED:fdaafd3b]
-        // Clear the continuous packet list
+        // 清空连续包列表
         flushPacket();
-        // 删除距离next_seq太大的包  [AUTO-TRANSLATED:9e774c5e]
-        // Delete packets that are too far away from next_seq
-        for (auto it = _pkt_sort_cache_map.begin(); it != _pkt_sort_cache_map.end();) {
-            if (distance(it->first) > _max_distance) {
-                it = _pkt_sort_cache_map.erase(it);
-            } else {
-                ++it;
-            }
-        }
+        // 删除距离next_seq太大的包（vector 上用 remove_if+erase 一次性剔除，避免逐个 erase 的 O(n²) 挪动）
+        auto erase_end = std::remove_if(_pkt_sort_cache_map.begin(), _pkt_sort_cache_map.end(),
+                                        [this](const std::pair<SEQ, T> &p) {
+                                            return distance(p.first) > _max_distance;
+                                        });
+        _pkt_sort_cache_map.erase(erase_end, _pkt_sort_cache_map.end());
     }
 
     bool mayLooped(SEQ last_seq, SEQ now_seq) { return last_seq > SEQ_MAX - _max_distance || now_seq < _max_distance; }
@@ -169,16 +175,15 @@ private:
         if (_pkt_sort_cache_map.empty()) {
             return;
         }
-        auto it = _pkt_sort_cache_map.lower_bound(_next_seq);
+        auto it = std::lower_bound(_pkt_sort_cache_map.begin(), _pkt_sort_cache_map.end(), _next_seq,
+                                   [](const std::pair<SEQ, T> &p, SEQ s) { return p.first < s; });
         if (!mayLooped(_next_seq, _next_seq)) {
-            // 无回环风险, 清空 < next_seq的值  [AUTO-TRANSLATED:10c77bf9]
-            // No loop risk, clear values less than next_seq
+            // 无回环风险, 清空 < next_seq的值
             it = _pkt_sort_cache_map.erase(_pkt_sort_cache_map.begin(), it);
         }
 
         while (it != _pkt_sort_cache_map.end()) {
-            // 找到下一个包  [AUTO-TRANSLATED:8e20ab9f]
-            // Find the next packet
+            // 找到下一个包
             if (it->first == _next_seq) {
                 it = popIterator(it);
                 continue;
@@ -230,12 +235,10 @@ private:
     // 下次应该输出的SEQ  [AUTO-TRANSLATED:e757a4fa]
     // The next SEQ to be output
     SEQ _next_seq = 0;
-    // pkt排序缓存，根据seq排序  [AUTO-TRANSLATED:3787f9a6]
-    // pkt sorting cache, sorted by seq
-    std::map<SEQ, T> _pkt_sort_cache_map;
-    // 预丢弃包列表  [AUTO-TRANSLATED:67e57ebc]
-    // Pre-discard packet list
-    std::map<SEQ, T> _pkt_drop_cache_map;
+    // pkt排序缓存，根据seq升序排列的有序vector
+    std::vector<std::pair<SEQ, T>> _pkt_sort_cache_map;
+    // 预丢弃包列表（seq回退包，同样按seq升序）
+    std::vector<std::pair<SEQ, T>> _pkt_drop_cache_map;
     // 回调  [AUTO-TRANSLATED:03bad27d]
     // Callback
     std::function<void(SEQ seq, T packet)> _cb;
