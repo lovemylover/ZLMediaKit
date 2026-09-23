@@ -443,6 +443,16 @@ void RtpSender::onFlushRtpList(shared_ptr<std::vector<Buffer::Ptr>> rtp_list) {
                 break;
         }
 
+        // 拥塞限流：每批一次 lock _muxer，避免每包 weak_ptr→shared_ptr 原子操作
+        std::shared_ptr<MultiMediaSourceMuxer> muxer;
+        if (_args.enable_origin_recv_limit) {
+            muxer = _muxer.lock();
+        }
+        // 非语音对讲时 socket 类型连接生命周期内不变，外提为布尔避免每包 sockType() 调用
+        bool is_tcp = !is_voice_talk && _socket_rtp->sockType() == SockNum::Sock_TCP;
+        // 批内去重：同一批次 pause 一次即可，pause(true) 幂等但调用链有开销
+        bool paused = false;
+
         for (auto &packet : *rtp_list) {
             if (is_voice_talk) {
                 // 语音对讲：socket 来自外部，每包需检查 alive 与类型
@@ -465,11 +475,15 @@ void RtpSender::onFlushRtpList(shared_ptr<std::vector<Buffer::Ptr>> rtp_list) {
             buf->assign(std::move(packet), offset);
             _socket_rtp->send(std::move(buf), nullptr, 0, ++i == size);
 
-            // 保留 TCP 拥塞限流检查
-            if (_args.enable_origin_recv_limit && _socket_rtp->sockType() == toolkit::SockNum::Sock_TCP && _socket_rtp->isSocketBusy()) {
-                auto muxer = _muxer.lock();
-                if (muxer) {
+            // TCP 拥塞限流检查（批内去重，pause 后本批不再重复调用）
+            if (muxer && !paused) {
+                // 语音对讲逐包检查 sockType，非语音对讲用外提的 is_tcp
+                bool tcp_busy = is_voice_talk
+                    ? (_socket_rtp->sockType() == SockNum::Sock_TCP && _socket_rtp->isSocketBusy())
+                    : (is_tcp && _socket_rtp->isSocketBusy());
+                if (tcp_busy) {
                     muxer->pause(MediaSource::NullMediaSource(), true);
+                    paused = true;
                 }
             }
         }
