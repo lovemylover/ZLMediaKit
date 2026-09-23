@@ -137,15 +137,18 @@ void FlvMuxer::onWriteFlvTag(uint8_t type, const Buffer::Ptr &buffer, uint32_t t
     header.timestamp_ex = (time_stamp >> 24) & 0xff;
     set_be24(header.timestamp, time_stamp & 0xFFFFFF);
 
-    //tag header
-    onWrite(obtainBuffer((char *) &header, sizeof(header)), false);
-
-    //tag data
-    onWrite(buffer, false);
-
-    //PreviousTagSize
-    uint32_t size = htonl((uint32_t) (buffer->size() + sizeof(header)));
-    onWrite(obtainBuffer((char *) &size, 4), flush);
+    // 合并 tag header + data + PreviousTagSize 为单个buffer，一次发送
+    // 参照 RtmpProtocol 发送路径合并写先例，减少2次池分配与2次onWrite入队
+    static constexpr auto kPrevTagSizeLen = 4;
+    auto out = obtainBuffer();
+    out->setCapacity(sizeof(header) + buffer->size() + kPrevTagSizeLen);
+    char *ptr = out->data();
+    memcpy(ptr, (char *) &header, sizeof(header));
+    memcpy(ptr + sizeof(header), buffer->data(), buffer->size());
+    uint32_t prev_tag_size = htonl((uint32_t) (buffer->size() + sizeof(header)));
+    memcpy(ptr + sizeof(header) + buffer->size(), (char *) &prev_tag_size, kPrevTagSizeLen);
+    out->setSize(sizeof(header) + buffer->size() + kPrevTagSizeLen);
+    onWrite(out, flush);
 }
 
 void FlvMuxer::onWriteRtmp(const RtmpPacket::Ptr &pkt, bool flush) {
