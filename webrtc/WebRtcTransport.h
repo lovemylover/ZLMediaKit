@@ -401,6 +401,16 @@ private:
     // 根据接收rtp的pt获取相关信息  [AUTO-TRANSLATED:39e56d7d]
     // Get relevant information based on the pt of the received rtp
     std::unordered_map<uint8_t/*pt*/, std::unique_ptr<WrappedMediaTrack>> _pt_to_track;
+
+    // pt -> track 双槽 memo 快路径，避免每包 unordered_map 哈希查找  [AUTO-TRANSLATED:1a2b3c4d]
+    // Dual-slot PT memo fast path to avoid per-packet unordered_map hash lookup
+    struct PtMemo {
+        static constexpr uint8_t kInvalidPT = 0xFF; // PT is 7-bit, 0xFF as sentinel
+        uint8_t pt = kInvalidPT;
+        WrappedMediaTrack *track = nullptr;
+    };
+    PtMemo _pt_memo[2];
+    size_t _pt_memo_next = 0;
     std::vector<SdpAttrCandidate> _cands;
     // http访问时的host ip  [AUTO-TRANSLATED:e8fe6957]
     // Host ip for http access

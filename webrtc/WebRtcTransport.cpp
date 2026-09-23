@@ -1343,12 +1343,30 @@ void WebRtcTransportImp::onRtp(const char *buf, size_t len, uint64_t stamp_ms) {
     _alive_ticker.resetTime();
 
     RtpHeader *rtp = (RtpHeader *)buf;
-    // 根据接收到的rtp的pt信息，找到该流的信息  [AUTO-TRANSLATED:9a97682c]
-    // Find the information of the stream according to the pt information of the received rtp
-    auto it = _pt_to_track.find(rtp->pt);
-    if (it == _pt_to_track.end()) {
-        WarnL << "unknown rtp pt:" << (int)rtp->pt;
-        return;
+    auto pt = rtp->pt;
+
+    // PT memo 快路径：先做整数比较，命中则跳过哈希查找  [AUTO-TRANSLATED:1a2b3c4d]
+    // PT memo fast path: integer comparison first, skip hash lookup on hit
+    WrappedMediaTrack *memo_track = nullptr;
+    for (auto &m : _pt_memo) {
+        if (m.pt == pt && m.track) {
+            memo_track = m.track;
+            break;
+        }
+    }
+
+    if (!memo_track) {
+        // miss: 回退 unordered_map 查找并填充 memo  [AUTO-TRANSLATED:9a97682c]
+        // Miss: fall back to unordered_map lookup and fill memo
+        auto it = _pt_to_track.find(pt);
+        if (it == _pt_to_track.end()) {
+            WarnL << "unknown rtp pt:" << (int)pt;
+            return;
+        }
+        memo_track = it->second.get();
+        auto &slot = _pt_memo[_pt_memo_next++ & 1];
+        slot.pt = pt;
+        slot.track = memo_track;
     }
 
     if (_rtcp_rr_send_ticker.elapsedTime() > 5000) {
@@ -1366,7 +1384,7 @@ void WebRtcTransportImp::onRtp(const char *buf, size_t len, uint64_t stamp_ms) {
         }
     }
 
-    it->second->inputRtp(buf, len, stamp_ms, rtp);
+    memo_track->inputRtp(buf, len, stamp_ms, rtp);
 }
 
 void WrappedRtpTrack::inputRtp(const char *buf, size_t len, uint64_t stamp_ms, RtpHeader *rtp) {
