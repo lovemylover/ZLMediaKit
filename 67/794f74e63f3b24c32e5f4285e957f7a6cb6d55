@@ -1,0 +1,35 @@
+src/Rtsp/RtpReceiver.h
+  s_ca2fbf31b7f74a::t_aa9618134d05fb 14-15
+  s_ca2fbf31b7f74a::t_b14032ca8f10d4 30
+  s_ce24333a37515d::t_58c0a40664744f 100
+  s_ce24333a37515d::t_76305799a5a970 153-155,157,160,162,164-169
+  s_ce24333a37515d::t_1d22d30307648c 88
+  s_ce24333a37515d::t_8394d8d9250896 238-241
+  s_ca2fbf31b7f74a::t_d6bb5b7eacec43 129
+  s_ce24333a37515d::t_fe8e99f2ae5f4c 178-179,181,186
+  s_ca2fbf31b7f74a::t_dd3ca9b80c8b26 121-128,130-131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "67794f74e63f3b24c32e5f4285e957f7a6cb6d55",
+  "prompts": {},
+  "sessions": {
+    "s_ca2fbf31b7f74a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c78ccf8a-a4c6-4783-a88a-f1d3c96df51f",
+        "model": "xingchen-4"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    },
+    "s_ce24333a37515d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e98c5ed9-5463-420b-89b0-e728229bac85",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
