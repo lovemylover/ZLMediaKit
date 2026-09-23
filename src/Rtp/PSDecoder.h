@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2016-present The ZLMediaKit project authors. All Rights Reserved.
  *
  * This file is part of ZLMediaKit(https://github.com/ZLMediaKit/ZLMediaKit).
@@ -14,26 +14,23 @@
 #if defined(ENABLE_RTPPROXY)
 #include <stdint.h>
 #include "Decoder.h"
-#include "Http/HttpRequestSplitter.h"
 
 namespace mediakit{
 
 // ps解析器  [AUTO-TRANSLATED:f156a1f1]
 // ps parser
-class PSDecoder : public Decoder, private HttpRequestSplitter {
+class PSDecoder : public Decoder {
 public:
     PSDecoder();
     ~PSDecoder();
 
     ssize_t input(const uint8_t* data, size_t bytes) override;
-
-    // HttpRequestSplitter interface
-private:
-    using HttpRequestSplitter::input;
-    const char *onSearchPacketTail(const char *data, size_t len) override;
-    ssize_t onRecvHeader(const char *, size_t) override { return 0; };
+    void clearInputCache() override;
 
 private:
+    // 销毁旧实例并重建 ps_demuxer，恢复回调注册
+    void rebuildDemuxer();
+
     void *_ps_demuxer = nullptr;
 };
 

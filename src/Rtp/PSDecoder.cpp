@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) 2016-present The ZLMediaKit project authors. All Rights Reserved.
  *
  * This file is part of ZLMediaKit(https://github.com/ZLMediaKit/ZLMediaKit).
@@ -18,6 +18,37 @@ using namespace toolkit;
 namespace mediakit{
 
 PSDecoder::PSDecoder() {
+    rebuildDemuxer();
+}
+
+PSDecoder::~PSDecoder() {
+    ps_demuxer_destroy(static_cast<struct ps_demuxer_t *>(_ps_demuxer));
+}
+
+ssize_t PSDecoder::input(const uint8_t *data, size_t bytes) {
+    try {
+        ps_demuxer_input(static_cast<struct ps_demuxer_t *>(_ps_demuxer), data, bytes);
+    } catch (AssertFailedException &ex) {
+        InfoL << "解析 ps 异常: bytes=" << bytes
+              << ", exception=" << ex.what()
+              << ", hex=" << hexdump(data, MIN(bytes, 32));
+        // 销毁重建，恢复解析能力
+        rebuildDemuxer();
+    }
+    return bytes;
+}
+
+void PSDecoder::clearInputCache() {
+    // 重建 demuxer 以清空内部残留缓冲
+    rebuildDemuxer();
+}
+
+void PSDecoder::rebuildDemuxer() {
+    if (_ps_demuxer) {
+        ps_demuxer_destroy(static_cast<struct ps_demuxer_t *>(_ps_demuxer));
+        _ps_demuxer = nullptr;
+    }
+
     _ps_demuxer = ps_demuxer_create([](void* param,
                                        int stream,
                                        int codecid,
@@ -26,53 +57,22 @@ PSDecoder::PSDecoder() {
                                        int64_t dts,
                                        const void* data,
                                        size_t bytes){
-        PSDecoder *thiz = (PSDecoder *)param;
+        PSDecoder *thiz = static_cast<PSDecoder *>(param);
         if(thiz->_on_decode){
             thiz->_on_decode(stream, codecid, flags, pts, dts, data, bytes);
         }
         return 0;
-    },this);
+    }, this);
 
     ps_demuxer_notify_t notify = {
             [](void *param, int stream, int codecid, const void *extra, int bytes, int finish) {
-                PSDecoder *thiz = (PSDecoder *) param;
+                PSDecoder *thiz = static_cast<PSDecoder *>(param);
                 if (thiz->_on_stream) {
                     thiz->_on_stream(stream, codecid, extra, bytes, finish);
                 }
             }
     };
-    ps_demuxer_set_notify((struct ps_demuxer_t *) _ps_demuxer, &notify, this);
-}
-
-PSDecoder::~PSDecoder() {
-    ps_demuxer_destroy((struct ps_demuxer_t*)_ps_demuxer);
-}
-
-ssize_t PSDecoder::input(const uint8_t *data, size_t bytes) {
-    HttpRequestSplitter::input(reinterpret_cast<const char *>(data), bytes);
-    return bytes;
-}
-
-const char *PSDecoder::onSearchPacketTail(const char *data, size_t len) {
-    try {
-        auto ret = ps_demuxer_input(static_cast<struct ps_demuxer_t *>(_ps_demuxer), reinterpret_cast<const uint8_t *>(data), len);
-        if (ret >= 0 && ret <= (ssize_t)len) {
-            // 解析成功全部或部分  [AUTO-TRANSLATED:a8085d34]
-            // Parse successful, all or part
-            return data + ret;
-        }
-
-        // 解析失败，丢弃所有数据  [AUTO-TRANSLATED:e6f644d9]
-        // Parse failed, discard all data
-        return data + len;
-    } catch (toolkit::AssertFailedException &ex) {
-        InfoL << "解析 ps 异常: bytes=" << len
-              << ", exception=" << ex.what()
-              << ", hex=" << hexdump(data, MIN(len, 32));
-        // 触发断言，解析失败，丢弃所有数据  [AUTO-TRANSLATED:b60c6db0]
-        // Trigger assertion, parse failed, discard all data
-        return data + len;
-    }
+    ps_demuxer_set_notify(static_cast<struct ps_demuxer_t *>(_ps_demuxer), &notify, this);
 }
 
 }//namespace mediakit
