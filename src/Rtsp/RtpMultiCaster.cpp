@@ -12,6 +12,7 @@
 #include <type_traits>
 #include "RtpMultiCaster.h"
 #include "Util/util.h"
+#include "Util/onceToken.h"
 #include "Network/sockutil.h"
 #include "RtspSession.h"
 #include "Common/config.h"
@@ -20,6 +21,9 @@ using namespace std;
 using namespace toolkit;
 
 namespace mediakit{
+
+// RTP 发送缓冲对象池，消除组播下行每包 make_shared 堆分配
+static ResourcePool<RtspBufferPoolable> s_buffer_pool;
 
 MultiCastAddressMaker &MultiCastAddressMaker::Instance() {
     static MultiCastAddressMaker instance;
@@ -143,9 +147,16 @@ RtpMultiCaster::RtpMultiCaster(SocketHelper &helper, const string &local_ip, con
     _rtp_reader->setReadCB([this](const RtspMediaSource::RingDataType &pkt) {
         size_t i = 0;
         auto size = pkt->size();
+        // 对象池预热，只执行一次
+        static onceToken s_pool_init([]() {
+            s_buffer_pool.setSize(1024);
+        });
         pkt->for_each([&](const RtpPacket::Ptr &rtp) {
             auto &sock = _udp_sock[rtp->type];
-            sock->send(std::make_shared<BufferRtp>(rtp, 4), nullptr, 0, ++i == size);
+            // 从对象池获取发送缓冲，消除每包 make_shared 堆分配
+            auto buf = s_buffer_pool.obtain2();
+            buf->assign(rtp, 4);
+            sock->send(std::move(buf), nullptr, 0, ++i == size);
         });
     });
 

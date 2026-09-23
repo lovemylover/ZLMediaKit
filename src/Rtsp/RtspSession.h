@@ -15,6 +15,8 @@
 #include <vector>
 #include <unordered_set>
 #include "Network/Session.h"
+#include "Network/Buffer.h"
+#include "Util/ResourcePool.h"
 #include "RtspSplitter.h"
 #include "RtpReceiver.h"
 #include "Rtcp/RtcpContext.h"
@@ -25,6 +27,36 @@
 namespace mediakit {
 
 using BufferRtp = toolkit::BufferOffset<toolkit::Buffer::Ptr>;
+
+// 可池化的 RTP 发送缓冲，替代 RTSP 下行路径中每次 make_shared<BufferRtp> 堆分配
+// 语义与 BufferOffset<Buffer::Ptr> 完全等价，提供 assign 供对象池复用时重置字段
+class RtspBufferPoolable : public toolkit::Buffer {
+public:
+    using Ptr = std::shared_ptr<RtspBufferPoolable>;
+
+    RtspBufferPoolable() = default;
+
+    // 池化复用时设置底层数据与偏移
+    void assign(toolkit::Buffer::Ptr data, size_t offset) {
+        _data = std::move(data);
+        _offset = offset;
+        _size = _data->size() - _offset;
+    }
+
+    char *data() const override {
+        return _data->data() + _offset;
+    }
+
+    size_t size() const override {
+        return _size;
+    }
+
+private:
+    toolkit::Buffer::Ptr _data;
+    size_t _offset = 0;
+    size_t _size = 0;
+};
+
 class RtspSession : public toolkit::Session, public RtspSplitter, public RtpReceiver, public MediaSourceEvent {
 public:
     using Ptr = std::shared_ptr<RtspSession>;
@@ -269,6 +301,10 @@ private:
     // 统计rtp并发送rtcp  [AUTO-TRANSLATED:0ac2b665]
     // Count RTP and send RTCP
     std::vector<RtcpContext::Ptr> _rtcp_context;
+
+    // RTP 发送缓冲对象池，消除每包 make_shared 堆分配
+    // ResourcePool 线程安全，可在 poller 线程间共享
+    static toolkit::ResourcePool<RtspBufferPoolable> _buffer_pool;
 };
 
 /**

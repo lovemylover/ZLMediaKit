@@ -10,6 +10,7 @@
 
 #include "Util/MD5.h"
 #include "Util/base64.h"
+#include "Util/onceToken.h"
 #include "RtspPusher.h"
 #include "RtspSession.h"
 #include "Rtcp/RtcpContext.h"
@@ -19,6 +20,9 @@ using namespace std;
 using namespace toolkit;
 
 namespace mediakit {
+
+// 对象池静态成员定义
+ResourcePool<RtspBufferPoolable> RtspPusher::_buffer_pool;
 
 RtspPusher::RtspPusher(const EventPoller::Ptr &poller, const RtspMediaSource::Ptr &src) : TcpClient(poller) {
     _push_src = src;
@@ -418,6 +422,10 @@ void RtspPusher::sendRtpPacket(const RtspMediaSource::RingDataType &pkt) {
         case Rtsp::RTP_UDP: {
             size_t i = 0;
             auto size = pkt->size();
+            // 对象池预热，只执行一次
+            static onceToken s_pool_init([]() {
+                _buffer_pool.setSize(1024);
+            });
             pkt->for_each([&](const RtpPacket::Ptr &rtp) {
                 updateRtcpContext(rtp);
                 int iTrackIndex = getTrackIndexByTrackType(rtp->type);
@@ -426,8 +434,10 @@ void RtspPusher::sendRtpPacket(const RtspMediaSource::RingDataType &pkt) {
                     shutdown(SockException(Err_shutdown, "udp sock not opened yet"));
                     return;
                 }
-
-                pSock->send(std::make_shared<BufferRtp>(rtp, RtpPacket::kRtpTcpHeaderSize), nullptr, 0, ++i == size);
+                // 从对象池获取发送缓冲，消除每包 make_shared 堆分配
+                auto buf = _buffer_pool.obtain2();
+                buf->assign(rtp, RtpPacket::kRtpTcpHeaderSize);
+                pSock->send(std::move(buf), nullptr, 0, ++i == size);
             });
             break;
         }

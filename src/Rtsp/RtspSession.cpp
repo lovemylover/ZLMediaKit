@@ -15,6 +15,7 @@
 #include "RtspSession.h"
 #include "Util/MD5.h"
 #include "Util/base64.h"
+#include "Util/onceToken.h"
 #include "RtpMultiCaster.h"
 #include "Rtcp/RtcpContext.h"
 
@@ -22,6 +23,9 @@ using namespace std;
 using namespace toolkit;
 
 namespace mediakit {
+
+// 对象池静态成员定义
+ResourcePool<RtspBufferPoolable> RtspSession::_buffer_pool;
 
 /**
  * rtsp协议有多种方式传输rtp数据包，目前已支持包括以下4种
@@ -1258,6 +1262,10 @@ void RtspSession::sendRtpPacket(const RtspMediaSource::RingDataType &pkt) {
             Socket::Ptr rtp_socks[2];
             rtp_socks[TrackVideo] = _rtp_socks[getTrackIndexByTrackType(TrackVideo)];
             rtp_socks[TrackAudio] = _rtp_socks[getTrackIndexByTrackType(TrackAudio)];
+            // 对象池预热，只执行一次
+            static onceToken s_pool_init([]() {
+                _buffer_pool.setSize(1024);
+            });
             pkt->for_each([&](const RtpPacket::Ptr &rtp) {
                 if (_target_play_track == TrackInvalid || _target_play_track == rtp->type) {
                     updateRtcpContext(rtp);
@@ -1267,7 +1275,10 @@ void RtspSession::sendRtpPacket(const RtspMediaSource::RingDataType &pkt) {
                         return;
                     }
                     _bytes_usage += rtp->size() - RtpPacket::kRtpTcpHeaderSize;
-                    sock->send(std::make_shared<BufferRtp>(rtp, RtpPacket::kRtpTcpHeaderSize), nullptr, 0, false);
+                    // 从对象池获取发送缓冲，消除每包 make_shared 堆分配
+                    auto buf = _buffer_pool.obtain2();
+                    buf->assign(rtp, RtpPacket::kRtpTcpHeaderSize);
+                    sock->send(std::move(buf), nullptr, 0, false);
                 }
             });
             for (auto &sock : rtp_socks) {

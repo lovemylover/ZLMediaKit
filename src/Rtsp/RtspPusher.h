@@ -20,6 +20,7 @@
 #include "RtspSplitter.h"
 #include "Pusher/PusherBase.h"
 #include "Rtcp/RtcpContext.h"
+#include "RtspSession.h"
 
 namespace mediakit {
 
@@ -104,6 +105,9 @@ private:
     // 统计rtp并发送rtcp  [AUTO-TRANSLATED:0ac2b665]
     // Statistics RTP and send RTCP
     std::vector<RtcpContext::Ptr> _rtcp_context;
+
+    // RTP 发送缓冲对象池，消除每包 make_shared 堆分配
+    static toolkit::ResourcePool<RtspBufferPoolable> _buffer_pool;
 };
 
 using RtspPusherImp = PusherImp<RtspPusher, PusherBase>;
