@@ -213,28 +213,6 @@ void RtmpProtocol::sendRequest(int cmd, const string& str) {
     }
 }
 
-class BufferPartial : public Buffer {
-public:
-    BufferPartial(const Buffer::Ptr &buffer, size_t offset, size_t size) {
-        _buffer = buffer;
-        _data = buffer->data() + offset;
-        _size = size;
-    }
-
-    char *data() const override {
-        return _data;
-    }
-
-    size_t size() const override{
-        return _size;
-    }
-
-private:
-    char *_data;
-    size_t _size;
-    Buffer::Ptr _buffer;
-};
-
 void RtmpProtocol::sendRtmp(uint8_t type, uint32_t stream_index, const std::string &buffer, uint32_t stamp, int chunk_id) {
     sendRtmp(type, stream_index, std::make_shared<BufferString>(buffer), stamp, chunk_id);
 }
@@ -248,64 +226,76 @@ void RtmpProtocol::sendRtmp(uint8_t type, uint32_t stream_index, const Buffer::P
     // Does it have an extended timestamp
     bool ext_stamp = stamp >= 0xFFFFFF;
 
-    // rtmp头  [AUTO-TRANSLATED:915b278c]
-    // RTMP header
-    BufferRaw::Ptr buffer_header = obtainBuffer();
-    buffer_header->setCapacity(sizeof(RtmpHeader));
-    buffer_header->setSize(sizeof(RtmpHeader));
-    // 对rtmp头赋值，如果使用整形赋值，在arm android上可能由于数据对齐导致总线错误的问题  [AUTO-TRANSLATED:90c79d70]
-    // Assign values to the RTMP header. If using integer assignment, it may cause bus errors on ARM Android due to data alignment issues
-    RtmpHeader *header = (RtmpHeader *) buffer_header->data();
+    // 计算需要分段的数量  [AUTO-TRANSLATED:1a2b3c4d]
+    // Calculate the number of chunks
+    size_t body_size = buf->size();
+    size_t n_chunks = body_size / _chunk_size_out;
+    if (body_size % _chunk_size_out) {
+        ++n_chunks;
+    }
+    if (n_chunks == 0) {
+        n_chunks = 1; // 至少有一个 chunk (空 body 也需要 header)
+    }
+
+    // 计算整体所需字节数：header + 后续各段(flag + ext_stamp + payload)  [AUTO-TRANSLATED:5e6f7a8b]
+    // Calculate total bytes needed: header + per-continuation (flag + ext_stamp + payload)
+    size_t total_size = sizeof(RtmpHeader);
+    if (n_chunks > 1) {
+        total_size += (n_chunks - 1) * 1; // 每个后续段 1 字节 flag
+        if (ext_stamp) {
+            total_size += (n_chunks - 1) * 4; // 每个后续段 4 字节扩展时间戳
+        }
+    }
+    total_size += body_size; // payload 总量
+
+    // 分配一个连续 buffer，将整个 RTMP message 拼入后一次性发送  [AUTO-TRANSLATED:9abc0def]
+    // Allocate a contiguous buffer, pack the entire RTMP message into it, and send once
+    BufferRaw::Ptr buffer = obtainBuffer();
+    buffer->setCapacity(total_size);
+    buffer->setSize(total_size);
+    char *ptr = buffer->data();
+
+    // 写入 fmt=0 的 RTMP 头 (12 字节)  [AUTO-TRANSLATED:90c79d70]
+    // Write the fmt=0 RTMP header (12 bytes), using byte assignment to avoid alignment issues on ARM
+    RtmpHeader *header = (RtmpHeader *)ptr;
     header->fmt = 0;
     header->chunk_id = chunk_id;
     header->type_id = type;
     set_be24(header->time_stamp, ext_stamp ? 0xFFFFFF : stamp);
-    set_be24(header->body_size, (uint32_t)buf->size());
+    set_be24(header->body_size, (uint32_t)body_size);
     set_le32(header->stream_index, stream_index);
-    // 发送rtmp头  [AUTO-TRANSLATED:3c038cd5]
-    // Send RTMP header
-    onSendRawData(std::move(buffer_header));
+    ptr += sizeof(RtmpHeader);
 
-    // 扩展时间戳字段  [AUTO-TRANSLATED:6f79a475]
-    // Extended timestamp field
-    BufferRaw::Ptr buffer_ext_stamp;
-    if (ext_stamp) {
-        // 生成扩展时间戳  [AUTO-TRANSLATED:cd22977a]
-        // Generate extended timestamp
-        buffer_ext_stamp = obtainBuffer();
-        buffer_ext_stamp->setCapacity(4);
-        buffer_ext_stamp->setSize(4);
-        set_be32(buffer_ext_stamp->data(), stamp);
-    }
-
-    // 生成一个字节的flag，标明是什么chunkId  [AUTO-TRANSLATED:fbdbf476]
-    // Generate a one-byte flag to indicate what chunkId it is
-    BufferRaw::Ptr buffer_flags = obtainBuffer();
-    buffer_flags->setCapacity(1);
-    buffer_flags->setSize(1);
-    header = (RtmpHeader *) buffer_flags->data();
-    header->fmt = 3;
-    header->chunk_id = chunk_id;
-
+    // 按 chunk_size_out 分段写入后续段  [AUTO-TRANSLATED:fbdbf476]
+    // Write continuation chunks separated by chunk_size_out
     size_t offset = 0;
-    size_t totalSize = sizeof(RtmpHeader);
-    while (offset < buf->size()) {
+    while (offset < body_size) {
         if (offset) {
-            onSendRawData(buffer_flags);
-            totalSize += 1;
+            // 写入 1 字节 flag (fmt=3, 同 chunk_id)  [AUTO-TRANSLATED:f263b9bf]
+            // Write 1-byte flag (fmt=3, same chunk_id)
+            header = (RtmpHeader *)ptr;
+            header->fmt = 3;
+            header->chunk_id = chunk_id;
+            ptr += 1;
+
+            if (ext_stamp) {
+                // 写入 4 字节扩展时间戳  [AUTO-TRANSLATED:cd22977a]
+                // Write 4-byte extended timestamp
+                set_be32(ptr, stamp);
+                ptr += 4;
+            }
         }
-        if (ext_stamp) {
-            // 扩展时间戳  [AUTO-TRANSLATED:f263b9bf]
-            // Extended timestamp
-            onSendRawData(buffer_ext_stamp);
-            totalSize += 4;
-        }
-        size_t chunk = min(_chunk_size_out, buf->size() - offset);
-        onSendRawData(std::make_shared<BufferPartial>(buf, offset, chunk));
-        totalSize += chunk;
+        size_t chunk = min((size_t)_chunk_size_out, body_size - offset);
+        memcpy(ptr, buf->data() + offset, chunk);
+        ptr += chunk;
         offset += chunk;
     }
-    _bytes_sent += (uint32_t)totalSize;
+
+    // 一次性发送整个 message  [AUTO-TRANSLATED:3c038cd5]
+    // Send the entire message in one call
+    onSendRawData(std::move(buffer));
+
+    _bytes_sent += (uint32_t)total_size;
     if (_windows_size > 0 && _bytes_sent - _bytes_sent_last >= _windows_size) {
         _bytes_sent_last = _bytes_sent;
         sendAcknowledgement(_bytes_sent);
