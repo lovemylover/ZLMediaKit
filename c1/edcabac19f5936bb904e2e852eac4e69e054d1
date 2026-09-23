@@ -1,0 +1,21 @@
+src/Rtp/PSDecoder.h
+  s_13efd9e8742e46::t_7ad9cc61456c61 1,22,28,31-32
+src/Rtp/PSDecoder.cpp
+  s_13efd9e8742e46::t_d111aad95d1609 1,21-51,60,65,69,75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "c1edcabac19f5936bb904e2e852eac4e69e054d1",
+  "prompts": {},
+  "sessions": {
+    "s_13efd9e8742e46": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "02eb263f-513c-4a58-b4c0-8aecf788e991",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
