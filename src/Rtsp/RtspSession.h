@@ -273,6 +273,8 @@ private:
     // sdp里面有效的track,包含音频或视频  [AUTO-TRANSLATED:64e2fcdf]
     // Valid track in SDP, including audio or video
     std::vector<SdpTrack::Ptr> _sdp_track;
+    // TrackType → sdp_track 索引的 2 槽 memo（TrackVideo=0, TrackAudio=1），消除每包线性扫描
+    int _track_idx_by_type[2] = { -1, -1 };
     // 播放器setup指定的播放track,默认为TrackInvalid表示不指定即音视频都推  [AUTO-TRANSLATED:c7a0df5e]
     // Track specified by the player setup, default is TrackInvalid, which means no specification, both audio and video are pushed
     TrackType _target_play_track = TrackInvalid;

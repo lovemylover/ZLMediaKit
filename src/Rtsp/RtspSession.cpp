@@ -434,7 +434,13 @@ void RtspSession::onAuthSuccess() {
             return;
         }
         strong_self->_rtcp_context.clear();
-        for (auto &track : strong_self->_sdp_track) {
+        strong_self->_track_idx_by_type[0] = -1;
+        strong_self->_track_idx_by_type[1] = -1;
+        for (size_t i = 0; i < strong_self->_sdp_track.size(); ++i) {
+            auto type = strong_self->_sdp_track[i]->_type;
+            if (type == TrackVideo || type == TrackAudio) {
+                strong_self->_track_idx_by_type[type] = (int)i;
+            }
             strong_self->_rtcp_context.emplace_back(std::make_shared<RtcpContextForSend>());
         }
         strong_self->_sessionid = makeRandStr(12);
@@ -1208,7 +1214,10 @@ void RtspSession::onBeforeRtpSorted(const RtpPacket::Ptr &rtp, int track_index){
 }
 
 void RtspSession::updateRtcpContext(const RtpPacket::Ptr &rtp){
-    int track_index = getTrackIndexByTrackType(rtp->type);
+    int track_index = rtp->type >= 0 && rtp->type <= 1 ? _track_idx_by_type[rtp->type] : -1;
+    if (track_index < 0) {
+        track_index = getTrackIndexByTrackType(rtp->type);
+    }
     auto &rtcp_ctx = _rtcp_context[track_index];
     rtcp_ctx->onRtp(rtp->getSeq(), rtp->getStamp(), rtp->ntp_stamp, rtp->sample_rate, rtp->size() - RtpPacket::kRtpTcpHeaderSize);
     if (!rtp->ntp_stamp && !rtp->getStamp()) {
@@ -1260,8 +1269,8 @@ void RtspSession::sendRtpPacket(const RtspMediaSource::RingDataType &pkt) {
         case Rtsp::RTP_UDP: {
             //下标0表示视频，1表示音频
             Socket::Ptr rtp_socks[2];
-            rtp_socks[TrackVideo] = _rtp_socks[getTrackIndexByTrackType(TrackVideo)];
-            rtp_socks[TrackAudio] = _rtp_socks[getTrackIndexByTrackType(TrackAudio)];
+            rtp_socks[TrackVideo] = _rtp_socks[_track_idx_by_type[TrackVideo] >= 0 ? _track_idx_by_type[TrackVideo] : getTrackIndexByTrackType(TrackVideo)];
+            rtp_socks[TrackAudio] = _rtp_socks[_track_idx_by_type[TrackAudio] >= 0 ? _track_idx_by_type[TrackAudio] : getTrackIndexByTrackType(TrackAudio)];
             // 对象池预热，只执行一次
             static onceToken s_pool_init([]() {
                 _buffer_pool.setSize(1024);
