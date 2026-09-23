@@ -1,0 +1,21 @@
+webrtc/WebRtcTransport.cpp
+  s_1578744beefaac::t_e9e7e06516bf70 1346-1369,1387
+webrtc/WebRtcTransport.h
+  s_1578744beefaac::t_e93649a0014b11 404-413
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "be797cb9d27f37a14ee426660e8977774554a4cc",
+  "prompts": {},
+  "sessions": {
+    "s_1578744beefaac": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "69fc6750-70bc-46f8-b7d9-d5fab309d913",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
