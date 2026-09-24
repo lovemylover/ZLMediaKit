@@ -1,0 +1,23 @@
+src/Rtmp/RtmpMuxer.cpp
+  s_42103fe310d4b5::t_4f91f5d32cc79e 25-41,51-56
+  s_42103fe310d4b5::t_ef513014970b41 78
+  s_42103fe310d4b5::t_a3164cb96bad9a 109-114
+src/Rtmp/RtmpMuxer.h
+  s_42103fe310d4b5::t_d4ebeea5c0c5fb 97-102,108-112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "b9856f57d7d5b0ebe29a64ba4a2d429ee38c4d3d",
+  "prompts": {},
+  "sessions": {
+    "s_42103fe310d4b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "420c4705-76a0-4b96-9cac-b68fb383893a",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
