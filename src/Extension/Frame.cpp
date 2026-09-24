@@ -293,7 +293,16 @@ bool FrameMerger::inputFrame(const Frame::Ptr &frame, onOutput cb, BufferLikeStr
             BufferLikeString &merged = buffer ? *buffer : tmp;
 
             if (!buffer) {
-                tmp.reserve(back->size() + 1024);
+                // 按多段累加精确预分配，避免合并中途 realloc+memcpy
+                size_t total = 0;
+                _frame_cache.for_each([&](const Frame::Ptr &frame) {
+                    switch (_type) {
+                        case none: total += frame->size(); break;
+                        case h264_prefix: total += frame->size() + (frame->prefixSize() ? 0 : 4); break;
+                        case mp4_nal_size: total += 4 + frame->size() - frame->prefixSize(); break;
+                    }
+                });
+                tmp.reserve(total);
             }
 
             _frame_cache.for_each([&](const Frame::Ptr &frame) {
