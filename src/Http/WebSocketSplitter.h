@@ -115,7 +115,34 @@ public:
      */
     void encode(const WebSocketHeader &header,const toolkit::Buffer::Ptr &buffer);
 
+    /**
+     * 编码一个数据包，与encode不同之处在于websocket头与负载合并为单个buffer，仅触发1次onWebSocketEncodeData回调
+     * 注意：mask_flag为true时负载需要按位异或mask，无法合并，此时内部退化为encode逻辑
+     * @param header 数据头
+     * @param buffer 负载数据
+     * Encode a data packet, the difference from encode is that the websocket header and payload are merged into a single buffer,
+     * only 1 onWebSocketEncodeData callback is triggered.
+     * Note: when mask_flag is true, the payload needs to be XORed with the mask and cannot be merged, in this case it degenerates to encode logic internally
+     * @param header Data header
+     * @param buffer Payload data
+
+     * [AUTO-TRANSLATED:8a4f0d21]
+     */
+    void encodeMerged(const WebSocketHeader &header,const toolkit::Buffer::Ptr &buffer);
+
 protected:
+    /**
+     * 申请编码后websocket数据的buffer，子类可重载以复用内存池
+     * @param capacity 需要的内存大小
+     * @return 容量不小于capacity的buffer
+     * Apply for the buffer of the encoded websocket data, subclasses can override to reuse the memory pool
+     * @param capacity Required memory size
+     * @return A buffer whose capacity is not less than capacity
+
+     * [AUTO-TRANSLATED:2c91be47]
+     */
+    virtual toolkit::BufferRaw::Ptr makeEncodeBuffer(size_t capacity);
+
     /**
      * 收到一个webSocket数据包包头，后续将继续触发onWebSocketDecodePayload回调
      * @param header 数据包头

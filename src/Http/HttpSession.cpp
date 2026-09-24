@@ -939,7 +939,9 @@ void HttpSession::onWrite(const Buffer::Ptr &buffer, bool flush) {
         header._reserved = 0;
         header._opcode = WebSocketHeader::BINARY;
         header._mask_flag = false;
-        WebSocketSplitter::encode(header, buffer);
+        // 合并websocket头与负载为单个buffer发送，避免每个数据包2次入队与1次堆分配
+        // Merge websocket header and payload into a single buffer for sending, avoiding 2 enqueues and 1 heap allocation per data packet
+        WebSocketSplitter::encodeMerged(header, buffer);
     }
 
     if (flush) {
@@ -952,6 +954,16 @@ void HttpSession::onWrite(const Buffer::Ptr &buffer, bool flush) {
 void HttpSession::onWebSocketEncodeData(Buffer::Ptr buffer) {
     _total_bytes_usage += buffer->size();
     send(std::move(buffer));
+}
+
+BufferRaw::Ptr HttpSession::makeEncodeBuffer(size_t capacity) {
+    auto buffer = obtainBuffer();
+    if (buffer->getCapacity() < capacity) {
+        // 内存池中的buffer容量不足时才重新分配，避免缩小内存池buffer导致后续反复开辟内存
+        // Only reallocate when the capacity of the buffer in the memory pool is insufficient, to avoid shrinking the memory pool buffer and causing repeated memory allocation
+        buffer->setCapacity(capacity);
+    }
+    return buffer;
 }
 
 void HttpSession::onWebSocketDecodeComplete(const WebSocketHeader &header_in) {

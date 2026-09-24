@@ -115,6 +115,16 @@ protected:
     void onWebSocketEncodeData(toolkit::Buffer::Ptr buffer) override;
 
     /**
+     * 申请发送websocket数据的buffer，复用FlvMuxer的内存池
+     * @param capacity 需要的内存大小
+     * Apply for the buffer for sending websocket data, reuse the FlvMuxer memory pool
+     * @param capacity Required memory size
+
+     * [AUTO-TRANSLATED:9e3fa6d2]
+     */
+    toolkit::BufferRaw::Ptr makeEncodeBuffer(size_t capacity) override;
+
+    /**
      * 接收到完整的一个webSocket数据包后回调
      * @param header 数据包包头
      * Callback after receiving a complete webSocket data packet

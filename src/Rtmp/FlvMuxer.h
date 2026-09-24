@@ -30,14 +30,16 @@ protected:
     virtual void onWrite(const toolkit::Buffer::Ptr &data, bool flush) = 0;
     virtual void onDetach() = 0;
     virtual std::shared_ptr<FlvMuxer> getSharedPtr() = 0;
+    // 从内存池中获取buffer，子类可复用以避免重复开辟内存  [AUTO-TRANSLATED:5ba3c7f1]
+    // Obtain a buffer from the memory pool, subclasses can reuse it to avoid repeatedly allocating memory
+    toolkit::BufferRaw::Ptr obtainBuffer(const void *data, size_t len);
+    toolkit::BufferRaw::Ptr obtainBuffer();
 
 private:
     void onWriteFlvHeader(const RtmpMediaSource::Ptr &src);
     void onWriteRtmp(const RtmpPacket::Ptr &pkt, bool flush);
     void onWriteFlvTag(const RtmpPacket::Ptr &pkt, uint32_t time_stamp, bool flush);
     void onWriteFlvTag(uint8_t type, const toolkit::Buffer::Ptr &buffer, uint32_t time_stamp, bool flush);
-    toolkit::BufferRaw::Ptr obtainBuffer(const void *data, size_t len);
-    toolkit::BufferRaw::Ptr obtainBuffer();
 
 private:
     toolkit::ResourcePool<toolkit::BufferRaw> _packet_pool;

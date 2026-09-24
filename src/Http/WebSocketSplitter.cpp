@@ -154,9 +154,9 @@ void WebSocketSplitter::onPayloadData(uint8_t *data, size_t len) {
     onWebSocketDecodePayload(*this, _mask_flag ? data - len : data, len, _payload_offset);
 }
 
-void WebSocketSplitter::encode(const WebSocketHeader &header,const Buffer::Ptr &buffer) {
-    string ret;
-    uint64_t len = buffer ? buffer->size() : 0;
+// 生成websocket头字节，返回mask是否生效(mask生效时负载需要按位异或mask)
+// Generate websocket header bytes, returns whether the mask takes effect (when the mask takes effect, the payload needs to be XORed with the mask)
+static bool makeWebSocketHeader(const WebSocketHeader &header, uint64_t len, std::string &ret) {
     uint8_t byte = header._fin << 7 | ((header._reserved & 0x07) << 4) | (header._opcode & 0x0F) ;
     ret.push_back(byte);
 
@@ -184,6 +184,13 @@ void WebSocketSplitter::encode(const WebSocketHeader &header,const Buffer::Ptr &
     if(mask_flag){
         ret.append((char *)header._mask.data(),4);
     }
+    return mask_flag;
+}
+
+void WebSocketSplitter::encode(const WebSocketHeader &header,const Buffer::Ptr &buffer) {
+    string ret;
+    uint64_t len = buffer ? buffer->size() : 0;
+    auto mask_flag = makeWebSocketHeader(header, len, ret);
 
     onWebSocketEncodeData(std::make_shared<BufferString>(std::move(ret)));
 
@@ -197,6 +204,33 @@ void WebSocketSplitter::encode(const WebSocketHeader &header,const Buffer::Ptr &
         onWebSocketEncodeData(buffer);
     }
 
+}
+
+BufferRaw::Ptr WebSocketSplitter::makeEncodeBuffer(size_t capacity) {
+    return BufferRaw::create(capacity);
+}
+
+void WebSocketSplitter::encodeMerged(const WebSocketHeader &header,const Buffer::Ptr &buffer) {
+    uint64_t len = buffer ? buffer->size() : 0;
+    if (header._mask_flag && header._mask.size() >= 4) {
+        // mask生效时负载需要逐字节异或，无法在不拷贝负载的情况下合并，走原有的两次回调逻辑  [AUTO-TRANSLATED:3d7bc1a4]
+        // When the mask takes effect, the payload needs to be XORed byte by byte, which cannot be merged without copying the payload, so use the original two callbacks logic
+        encode(header, buffer);
+        return;
+    }
+
+    string head;
+    makeWebSocketHeader(header, len, head);
+
+    // websocket头与负载合并为单个buffer，仅触发1次onWebSocketEncodeData回调
+    // Merge the websocket header and payload into a single buffer, only triggering 1 onWebSocketEncodeData callback
+    auto out = makeEncodeBuffer(head.size() + len);
+    memcpy(out->data(), head.data(), head.size());
+    if (len > 0) {
+        memcpy(out->data() + head.size(), buffer->data(), len);
+    }
+    out->setSize(head.size() + len);
+    onWebSocketEncodeData(std::move(out));
 }
 
 
