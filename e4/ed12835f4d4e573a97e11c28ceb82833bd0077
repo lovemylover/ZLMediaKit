@@ -1,0 +1,19 @@
+src/Http/WebSocketSplitter.cpp
+  s_0c553560de6065::t_d6491b54d6d7e9 149-167,171
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "e4ed12835f4d4e573a97e11c28ceb82833bd0077",
+  "prompts": {},
+  "sessions": {
+    "s_0c553560de6065": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5e502722-6752-44af-9e0c-210878558f9a",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
