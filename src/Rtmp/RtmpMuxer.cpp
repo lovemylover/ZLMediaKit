@@ -22,6 +22,23 @@ RtmpMuxer::RtmpMuxer(const TitleMeta::Ptr &title) {
     _rtmp_ring = std::make_shared<RtmpRing::RingType>();
 }
 
+RtmpCodec::Ptr &RtmpMuxer::getEncoder(int index) {
+    // 双槽memo快路径：整数比较，命中则跳过哈希查找
+    // Two-slot memo fast path: integer comparison, skip the hash lookup on hit
+    for (size_t i = 0; i < 2; ++i) {
+        if (_encoder_memo_key[i] == index && _encoder_memo[i]) {
+            return *_encoder_memo[i];
+        }
+    }
+    // miss: 回退operator[]（保持插入默认值语义），回填一个槽位
+    // miss: fall back to operator[] (maintain insert-default-value semantics), backfill a slot
+    auto &ref = _encoders[index];
+    size_t slot_idx = _encoder_memo_next++ & 1;
+    _encoder_memo[slot_idx] = &ref;
+    _encoder_memo_key[slot_idx] = index;
+    return ref;
+}
+
 bool RtmpMuxer::addTrack(const Track::Ptr &track) {
     if (_track_existed[track->getTrackType()]) {
         // rtmp不支持多个同类型track  [AUTO-TRANSLATED:c69a7864]
@@ -31,6 +48,12 @@ bool RtmpMuxer::addTrack(const Track::Ptr &track) {
     }
 
     auto &encoder = _encoders[track->getIndex()];
+    // 新增元素保守清空memo（unordered_map为节点式容器，rehash不会使元素指针失效，此处仅为与先例一致并防御容器变更）
+    // Conservatively clear the memo when adding an element (unordered_map is a node-based container, rehash does not invalidate element pointers; this is only to stay consistent with the precedent and defend against container changes)
+    _encoder_memo[0] = nullptr;
+    _encoder_memo[1] = nullptr;
+    _encoder_memo_key[0] = -1;
+    _encoder_memo_key[1] = -1;
     CHECK(!encoder);
     encoder = Factory::getRtmpEncoderByTrack(track);
     if (!encoder) {
@@ -52,7 +75,7 @@ bool RtmpMuxer::addTrack(const Track::Ptr &track) {
 }
 
 bool RtmpMuxer::inputFrame(const Frame::Ptr &frame) {
-    auto &encoder = _encoders[frame->getIndex()];
+    auto &encoder = getEncoder(frame->getIndex());
     return encoder ? encoder->inputFrame(frame) : false;
 }
 
@@ -83,6 +106,12 @@ RtmpRing::RingType::Ptr RtmpMuxer::getRtmpRing() const {
 void RtmpMuxer::resetTracks() {
     _metadata.clear();
     _encoders.clear();
+    // 清空后节点全部销毁，memo指针全部悬空
+    // After clearing, all nodes are destroyed and all memo pointers dangle
+    _encoder_memo[0] = nullptr;
+    _encoder_memo[1] = nullptr;
+    _encoder_memo_key[0] = -1;
+    _encoder_memo_key[1] = -1;
     CLEAR_ARR(_track_existed);
 }
 

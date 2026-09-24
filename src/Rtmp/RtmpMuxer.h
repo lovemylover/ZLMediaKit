@@ -94,11 +94,22 @@ public:
      void makeConfigPacket();
 
 private:
+    // 获取track_index对应的encoder，优先命中memo，miss时回退哈希查找并回填
+    // Get the encoder corresponding to track_index, prefer hitting the memo, fall back to hash lookup and backfill on miss
+    // 注意保持operator[]语义：不存在时插入默认构造的空encoder
+    // Note to maintain operator[] semantics: insert a default-constructed empty encoder when it does not exist
+    RtmpCodec::Ptr &getEncoder(int index);
+
     bool _track_existed[2] = { false, false };
 
     AMFValue _metadata;
     RtmpRing::RingType::Ptr _rtmp_ring;
     std::unordered_map<int, RtmpCodec::Ptr> _encoders;
+    // track_index -> encoder 双槽memo，消除每帧哈希查找
+    // track_index -> encoder two-slot memo, eliminating the hash lookup per frame
+    RtmpCodec::Ptr *_encoder_memo[2] = { nullptr, nullptr };
+    int _encoder_memo_key[2] = { -1, -1 };
+    size_t _encoder_memo_next = 0;
 };
 
 
