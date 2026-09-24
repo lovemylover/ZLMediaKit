@@ -776,6 +776,10 @@ const char* RtmpProtocol::handle_rtmp(const char *data, size_t len) {
             return ptr;
         }
         if (more) {
+            // 消息首包时按 body_size 预分配，避免逐 chunk append 指数扩容
+            if (chunk_data.buffer.empty() && chunk_data.buffer.capacity() < chunk_data.body_size) {
+                chunk_data.buffer.reserve(chunk_data.body_size);
+            }
             chunk_data.buffer.append(ptr + header_len + offset, more);
         }
         ptr += header_len + offset + more;
