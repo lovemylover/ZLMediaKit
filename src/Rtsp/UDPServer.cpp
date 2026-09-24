@@ -39,7 +39,10 @@ Socket::Ptr UDPServer::getSock(SocketHelper &helper, const char* local_ip, int i
         }
 
         sock->setOnErr(bind(&UDPServer::onErr, this, key, placeholders::_1));
-        sock->setOnRead(bind(&UDPServer::onRecv, this, interleaved, placeholders::_1, placeholders::_2));
+        auto cache = std::make_shared<PeerAddrCache>();
+        sock->setOnRead([this, interleaved, cache](const Buffer::Ptr &buf, struct sockaddr *peer_addr, int addr_len) {
+            onRecv(interleaved, buf, peer_addr, addr_len, cache);
+        });
         _udp_sock_map[key] = sock;
         DebugL << local_ip << " " << sock->get_local_port() << " " << interleaved;
         return sock;
@@ -75,8 +78,17 @@ void UDPServer::onErr(const string &key, const SockException &err) {
     _udp_sock_map.erase(key);
 }
 
-void UDPServer::onRecv(int interleaved, const Buffer::Ptr &buf, struct sockaddr* peer_addr) {
-    string peer_ip = SockUtil::inet_ntoa(peer_addr);
+void UDPServer::onRecv(int interleaved, const Buffer::Ptr &buf, struct sockaddr* peer_addr, int addr_len, const std::shared_ptr<PeerAddrCache> &cache) {
+    // 惰性缓存：同地址复用上次 inet_ntoa 结果，消除每包字符串格式化与堆分配
+    if (cache->addr_len == addr_len && addr_len > 0 &&
+        memcmp(&cache->addr, peer_addr, addr_len) == 0) {
+        // 命中缓存
+    } else {
+        memcpy(&cache->addr, peer_addr, addr_len);
+        cache->addr_len = addr_len;
+        cache->ip_str = SockUtil::inet_ntoa(peer_addr);
+    }
+    const string &peer_ip = cache->ip_str;
     lock_guard<mutex> lck(_mtx_on_recv);
     auto it0 = _on_recv_map.find(peer_ip);
     if (it0 == _on_recv_map.end()) {

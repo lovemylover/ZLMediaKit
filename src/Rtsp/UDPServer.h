@@ -1,8 +1,6 @@
-﻿/*
+/*
  * Copyright (c) 2016-present The ZLMediaKit project authors. All Rights Reserved.
- *
  * This file is part of ZLMediaKit(https://github.com/ZLMediaKit/ZLMediaKit).
- *
  * Use of this source code is governed by MIT-like license that can be found in the
  * LICENSE file in the root of the source tree. All contributing project authors
  * may be found in the AUTHORS file in the root of the source tree.
@@ -11,17 +9,24 @@
 #ifndef RTSP_UDPSERVER_H_
 #define RTSP_UDPSERVER_H_
 
-#include <stdint.h>
+#include <cstdint>
 #include <mutex>
 #include <memory>
 #include <unordered_map>
+#include <string>
 #include "Network/Socket.h"
 
 namespace mediakit {
 
+struct PeerAddrCache {
+    struct sockaddr_storage addr;
+    int addr_len = 0;
+    std::string ip_str;
+};
+
 class UDPServer : public std::enable_shared_from_this<UDPServer> {
 public:
-    using onRecvData = std::function<bool(int intervaled, const toolkit::Buffer::Ptr &buffer, struct sockaddr *peer_addr)> ;
+    using onRecvData = std::function<bool(int intervaled, const toolkit::Buffer::Ptr &buffer, struct sockaddr *peer_addr) >;
     ~UDPServer();
     static UDPServer &Instance();
     toolkit::Socket::Ptr getSock(toolkit::SocketHelper &helper, const char *local_ip, int interleaved, uint16_t local_port = 0);
@@ -30,7 +35,7 @@ public:
 
 private:
     UDPServer();
-    void onRecv(int interleaved, const toolkit::Buffer::Ptr &buf, struct sockaddr *peer_addr);
+    void onRecv(int interleaved, const toolkit::Buffer::Ptr &buf, struct sockaddr *peer_addr, int addr_len, const std::shared_ptr<PeerAddrCache> &cache);
     void onErr(const std::string &strKey, const toolkit::SockException &err);
 
 private:
