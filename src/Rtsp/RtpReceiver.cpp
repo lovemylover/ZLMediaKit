@@ -108,7 +108,13 @@ RtpPacket::Ptr RtpTrack::inputRtp(TrackType type, int sample_rate, uint8_t *ptr,
     if (_disable_ntp) {
         // 不支持ntp时间戳，例如国标推流，那么直接使用rtp时间戳  [AUTO-TRANSLATED:20085979]
         // Does not support NTP timestamp, such as national standard streaming, so directly use RTP timestamp
-        rtp->ntp_stamp = rtp->getStamp() * uint64_t(1000) / sample_rate;
+        if (_ntp_sample_rate != sample_rate) {
+            // sample_rate在一条流生命周期内固定不变，仅在变化时重算换算因子，把每包的64位除法改为乘法
+            // sample_rate is fixed during the life cycle of a stream, recalculate the conversion factor only when it changes, changing the 64-bit division per packet to multiplication
+            _ntp_sample_rate = sample_rate;
+            _ntp_ms_per_tick = 1000.0 / sample_rate;
+        }
+        rtp->ntp_stamp = static_cast<uint64_t>(rtp->getStamp() * _ntp_ms_per_tick);
     } else {
         // 设置ntp时间戳  [AUTO-TRANSLATED:5e60d5cf]
         // Set NTP timestamp

@@ -270,6 +270,12 @@ private:
     uint32_t _ssrc = 0;
     toolkit::Ticker _ssrc_alive;
     NtpStamp _ntp_stamp;
+    // 换算因子缓存的采样率，用于检测sample_rate变化
+    // The sample rate cached by the conversion factor, used to detect sample_rate changes
+    int _ntp_sample_rate = 0;
+    // 每采样tick对应的毫秒数缓存，除法改乘法以消除每包64位除法
+    // Cache of milliseconds per sampling tick, division changed to multiplication to eliminate 64-bit division per packet
+    double _ntp_ms_per_tick = 0;
 };
 
 class RtpTrackImp : public RtpTrack{

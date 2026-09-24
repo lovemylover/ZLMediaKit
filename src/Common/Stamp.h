@@ -214,9 +214,19 @@ private:
     void update(uint32_t rtp_stamp, uint64_t ntp_stamp_us);
     uint64_t getNtpStampUS(uint32_t rtp_stamp, uint32_t sample_rate);
 
+    // 获取每采样tick对应的微秒数，sample_rate变化时才重算缓存因子
+    // Get the microseconds per sampling tick, recalculate the cached factor only when sample_rate changes
+    double getUsPerTick(uint32_t sample_rate);
+
 private:
     uint32_t _last_rtp_stamp = 0;
     uint64_t _last_ntp_stamp_us = 0;
+    // 换算因子缓存的采样率，用于检测sample_rate变化
+    // The sample rate cached by the conversion factor, used to detect sample_rate changes
+    uint32_t _cached_sample_rate = 0;
+    // 每采样tick对应的微秒数缓存，除法改乘法以消除每包浮点除法
+    // Cache of microseconds per sampling tick, division changed to multiplication to eliminate floating-point division per packet
+    double _us_per_tick = 0;
 };
 
 }//namespace mediakit

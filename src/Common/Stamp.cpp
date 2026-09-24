@@ -420,6 +420,16 @@ uint64_t NtpStamp::getNtpStamp(uint32_t rtp_stamp, uint32_t sample_rate) {
     return getNtpStampUS(rtp_stamp, sample_rate) / 1000;
 }
 
+double NtpStamp::getUsPerTick(uint32_t sample_rate) {
+    if (_cached_sample_rate != sample_rate) {
+        // sample_rate在一条流生命周期内固定不变，仅在变化时重算换算因子
+        // sample_rate is fixed during the life cycle of a stream, recalculate the conversion factor only when it changes
+        _cached_sample_rate = sample_rate;
+        _us_per_tick = 1000000.0 / sample_rate;
+    }
+    return _us_per_tick;
+}
+
 uint64_t NtpStamp::getNtpStampUS(uint32_t rtp_stamp, uint32_t sample_rate) {
     if (!_last_ntp_stamp_us) {
         // 尚未收到sender report rtcp包，那么赋值为本地系统时间戳吧  [AUTO-TRANSLATED:c9056069]
@@ -427,10 +437,14 @@ uint64_t NtpStamp::getNtpStampUS(uint32_t rtp_stamp, uint32_t sample_rate) {
         update(rtp_stamp, getCurrentMicrosecond(true));
     }
 
+    // 换算因子缓存，把每包的浮点除法改为浮点乘法
+    // Conversion factor cache, changing the floating-point division per packet to floating-point multiplication
+    auto us_per_tick = getUsPerTick(sample_rate);
+
     // rtp时间戳正增长  [AUTO-TRANSLATED:4d3c87d1]
     // The rtp timestamp is increasing
     if (rtp_stamp >= _last_rtp_stamp) {
-        auto diff_us = static_cast<int64_t>((rtp_stamp - _last_rtp_stamp) / (sample_rate / 1000000.0f));
+        auto diff_us = static_cast<int64_t>((rtp_stamp - _last_rtp_stamp) * us_per_tick);
         if (diff_us < MAX_DELTA_STAMP * 1000) {
             // 时间戳正常增长  [AUTO-TRANSLATED:db60e84a]
             // The timestamp is increasing normally
@@ -456,7 +470,7 @@ uint64_t NtpStamp::getNtpStampUS(uint32_t rtp_stamp, uint32_t sample_rate) {
 
     // rtp时间戳负增长  [AUTO-TRANSLATED:54a7f797]
     // The rtp timestamp is decreasing
-    auto diff_us = static_cast<int64_t>((_last_rtp_stamp - rtp_stamp) / (sample_rate / 1000000.0f));
+    auto diff_us = static_cast<int64_t>((_last_rtp_stamp - rtp_stamp) * us_per_tick);
     if (diff_us < MAX_DELTA_STAMP * 1000) {
         // 正常范围的时间戳回退，说明收到rtp乱序了  [AUTO-TRANSLATED:f691d5bf]
         // The timestamp retreats within the normal range, indicating that the rtp is out of order
