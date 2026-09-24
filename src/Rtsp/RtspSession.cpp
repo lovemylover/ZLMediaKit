@@ -173,7 +173,28 @@ void RtspSession::onRtpPacket(const char *data, size_t len) {
     if (interleaved % 2 == 0) {
         CHECK(len > RtpPacket::kRtpHeaderSize + RtpPacket::kRtpTcpHeaderSize);
         RtpHeader *header = (RtpHeader *)(data + RtpPacket::kRtpTcpHeaderSize);
-        auto track_idx = getTrackIndexByPT(header->pt);
+        // 2 槽 PT memo 快路径：SDP 协商后 PT 不变，命中时跳过线性扫描
+        int track_idx = -1;
+        for (int i = 0; i < 2; ++i) {
+            if (_pt_cache_key[i] == header->pt) {
+                track_idx = _pt_cache_val[i];
+                break;
+            }
+        }
+        if (track_idx == -1) {
+            track_idx = getTrackIndexByPT(header->pt);
+            if (track_idx >= 0) {
+                for (int i = 0; i < 2; ++i) {
+                    if (_pt_cache_key[i] == -1 || _pt_cache_key[i] == header->pt) {
+                        _pt_cache_key[i] = header->pt;
+                        _pt_cache_val[i] = track_idx;
+                        break;
+                    }
+                }
+            } else {
+                return;
+            }
+        }
         handleOneRtp(track_idx, _sdp_track[track_idx]->_type, _sdp_track[track_idx]->_samplerate, (uint8_t *) data + RtpPacket::kRtpTcpHeaderSize, len - RtpPacket::kRtpTcpHeaderSize);
     } else {
         auto track_idx = getTrackIndexByInterleaved(interleaved - 1);
@@ -268,6 +289,9 @@ void RtspSession::handleReq_ANNOUNCE(const Parser &parser) {
             shutdown(SockException(Err_shutdown, StrPrinter << err << ":" << full_url));
             return;
         }
+        // SDP 变更，清空 PT memo
+        _pt_cache_key[0] = -1;
+        _pt_cache_key[1] = -1;
         _rtcp_context.clear();
         for (auto &track : _sdp_track) {
             _rtcp_context.emplace_back(std::make_shared<RtcpContextForRecv>());
@@ -436,6 +460,8 @@ void RtspSession::onAuthSuccess() {
         strong_self->_rtcp_context.clear();
         strong_self->_track_idx_by_type[0] = -1;
         strong_self->_track_idx_by_type[1] = -1;
+        strong_self->_pt_cache_key[0] = -1;
+        strong_self->_pt_cache_key[1] = -1;
         for (size_t i = 0; i < strong_self->_sdp_track.size(); ++i) {
             auto type = strong_self->_sdp_track[i]->_type;
             if (type == TrackVideo || type == TrackAudio) {
