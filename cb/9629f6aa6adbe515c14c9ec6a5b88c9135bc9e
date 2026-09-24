@@ -1,0 +1,24 @@
+src/Rtp/RtpServer.cpp
+  s_3ac93ffb9af198::t_ee8a75ef4c8673 104-107
+  s_3ac93ffb9af198::t_13cc01aa4a8c3e 134
+src/Rtp/RtpSession.cpp
+  s_3ac93ffb9af198::t_f12ea68e92dc0d 150-152
+src/Rtp/RtpSession.h
+  s_3ac93ffb9af198::t_986e9fc6881e71 62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "cb9629f6aa6adbe515c14c9ec6a5b88c9135bc9e",
+  "prompts": {},
+  "sessions": {
+    "s_3ac93ffb9af198": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c0c0cd00-4fc6-42f8-a9c8-ecaf2d99dc96",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
