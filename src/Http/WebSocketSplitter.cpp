@@ -146,12 +146,29 @@ begin_decode:
 
 void WebSocketSplitter::onPayloadData(uint8_t *data, size_t len) {
     if(_mask_flag){
-        for(size_t i = 0; i < len ; ++i,++data){
-            *(data) ^= _mask[(i + _mask_offset) % 4];
+        // mask的4个字节按内存顺序拼成一个32位字，再按4字节块异或payload，尾部字节按绝对偏移取mask  [AUTO-TRANSLATED:6f1c9ab2]
+        // The 4 bytes of the mask are assembled into a 32-bit word in memory order, then the payload is XORed in 4-byte blocks,
+        // and the trailing bytes use the mask according to the absolute offset
+        uint8_t mask4[4];
+        for (uint8_t i = 0; i < 4; ++i) {
+            mask4[i] = _mask[(_mask_offset + i) & 3];
+        }
+        uint32_t mask_word;
+        memcpy(&mask_word, mask4, 4);
+
+        size_t i = 0;
+        for (; i + 4 <= len; i += 4) {
+            uint32_t value;
+            memcpy(&value, data + i, 4);
+            value ^= mask_word;
+            memcpy(data + i, &value, 4);
+        }
+        for (; i < len; ++i) {
+            data[i] ^= _mask[(_mask_offset + i) & 3];
         }
         _mask_offset = (_mask_offset + len) % 4;
     }
-    onWebSocketDecodePayload(*this, _mask_flag ? data - len : data, len, _payload_offset);
+    onWebSocketDecodePayload(*this, data, len, _payload_offset);
 }
 
 // 生成websocket头字节，返回mask是否生效(mask生效时负载需要按位异或mask)
