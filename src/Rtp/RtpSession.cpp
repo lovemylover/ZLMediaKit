@@ -147,7 +147,9 @@ void RtpSession::onRtpPacket(const char *data, size_t len) {
             throw;
         }
     }
-    _ticker.resetTime();
+    if ((++_ticker_reset_cnt & 0x3F) == 0) {
+        _ticker.resetTime();
+    }
 }
 
 static const char *findSSRC(const char *data, ssize_t len, uint32_t ssrc) {

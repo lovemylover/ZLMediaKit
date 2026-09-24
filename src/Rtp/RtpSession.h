@@ -59,6 +59,7 @@ private:
     int _only_track = 0;
     uint32_t _ssrc = 0;
     toolkit::Ticker _ticker;
+    uint32_t _ticker_reset_cnt = 0;
     MediaTuple _tuple;
     struct sockaddr_storage _addr;
     RtpProcess::Ptr _process;

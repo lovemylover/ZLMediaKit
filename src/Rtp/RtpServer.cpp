@@ -101,6 +101,10 @@ public:
 
 private:
     void sendRtcp(uint32_t rtp_ssrc, struct sockaddr *addr) {
+        // 包计数节流：每64包才检查一次时间，避免每包 atomic load
+        if ((++_rtcp_check_cnt & 0x3F) != 0) {
+            return;
+        }
         // 每5秒发送一次rtcp  [AUTO-TRANSLATED:3c9bcb7b]
         // Send RTCP every 5 seconds
         if (_ticker.elapsedTime() < 5000) {
@@ -127,6 +131,7 @@ private:
     uint32_t _ssrc = 0;
     std::function<void()> _timeout_cb;
     Ticker _ticker;
+    uint32_t _rtcp_check_cnt = 0;
     Socket::Ptr _rtcp_sock;
     RtpProcess::Ptr _process;
     MediaTuple _tuple;
