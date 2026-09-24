@@ -1,0 +1,22 @@
+src/Rtsp/UDPServer.h
+  s_3ac93ffb9af198::t_2e64eaf837c3e9 1,12,16,21-26,29,38
+src/Rtsp/UDPServer.cpp
+  s_3ac93ffb9af198::t_ae6a48a6de457d 42-45
+  s_3ac93ffb9af198::t_74280313793ea1 81-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "c49e31e89a8a230694511f99942e008b01e42d3b",
+  "prompts": {},
+  "sessions": {
+    "s_3ac93ffb9af198": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c0c0cd00-4fc6-42f8-a9c8-ecaf2d99dc96",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
