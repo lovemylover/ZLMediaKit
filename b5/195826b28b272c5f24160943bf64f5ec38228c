@@ -1,0 +1,22 @@
+src/Rtsp/RtspMediaSourceImp.cpp
+  s_d505b1b4050086::t_5c67fdcb0feebc 66
+  s_d505b1b4050086::t_0fe18b11a4e4a9 9-13
+src/Rtsp/Rtsp.h
+  s_d505b1b4050086::t_8ff2e24c2ef113 255-256
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "b5195826b28b272c5f24160943bf64f5ec38228c",
+  "prompts": {},
+  "sessions": {
+    "s_d505b1b4050086": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c3b181ec-cf37-41ac-be1e-34252c55fca2",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
