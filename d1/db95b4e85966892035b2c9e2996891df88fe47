@@ -1,0 +1,26 @@
+src/Common/Stamp.cpp
+  s_42103fe310d4b5::t_268655e34380a2 473
+  s_42103fe310d4b5::t_207574c7b9da70 423-432,440-443,447
+src/Rtsp/RtpReceiver.h
+  s_42103fe310d4b5::t_d53e6a2ec7f533 273-278
+src/Rtsp/RtpReceiver.cpp
+  s_42103fe310d4b5::t_e2d9719e31c2ae 111-117
+src/Common/Stamp.h
+  s_42103fe310d4b5::t_347102aa10406e 217-220,224-229
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "d1db95b4e85966892035b2c9e2996891df88fe47",
+  "prompts": {},
+  "sessions": {
+    "s_42103fe310d4b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "420c4705-76a0-4b96-9cac-b68fb383893a",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
