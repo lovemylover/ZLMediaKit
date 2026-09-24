@@ -89,6 +89,7 @@ void MP4MuxerInterface::resetTracks() {
     _have_video = false;
     _mov_writter = nullptr;
     _tracks.clear();
+    _track_memo[0] = _track_memo[1] = nullptr;
 }
 
 void MP4MuxerInterface::flush() {
@@ -98,11 +99,22 @@ void MP4MuxerInterface::flush() {
 }
 
 bool MP4MuxerInterface::inputFrame(const Frame::Ptr &frame) {
-    auto it = _tracks.find(frame->getIndex());
-    if (it == _tracks.end()) {
-        // 该Track不存在或初始化失败  [AUTO-TRANSLATED:316597dc]
-        // This Track does not exist or initialization failed
-        return false;
+    auto index = frame->getIndex();
+    MP4Track *track_ptr = nullptr;
+    if (index >= 0 && index < 2) {
+        track_ptr = _track_memo[index];
+    }
+    if (!track_ptr) {
+        auto it = _tracks.find(index);
+        if (it == _tracks.end()) {
+            // 该Track不存在或初始化失败  [AUTO-TRANSLATED:316597dc]
+            // This Track does not exist or initialization failed
+            return false;
+        }
+        track_ptr = &it->second;
+        if (index >= 0 && index < 2) {
+            _track_memo[index] = track_ptr;
+        }
     }
 
     if (!_started) {
@@ -135,7 +147,7 @@ bool MP4MuxerInterface::inputFrame(const Frame::Ptr &frame) {
 
     // mp4文件时间戳需要从0开始  [AUTO-TRANSLATED:c963b841]
     // The mp4 file timestamp needs to start from 0
-    auto &track = it->second;
+    auto &track = *track_ptr;
     switch (frame->getCodecId()) {
         case CodecH264:
         case CodecH265: {
@@ -206,6 +218,9 @@ bool MP4MuxerInterface::addTrack(const Track::Ptr &track) {
             return false;
         }
         _tracks[track->getIndex()].track_id = track_id;
+        if (track->getIndex() >= 0 && track->getIndex() < 2) {
+            _track_memo[track->getIndex()] = nullptr;
+        }
         _have_video = true;
         _non_iframe_video_count = 0;
     } else if (track->getTrackType() == TrackAudio) {
@@ -217,6 +232,9 @@ bool MP4MuxerInterface::addTrack(const Track::Ptr &track) {
             return false;
         }
         _tracks[track->getIndex()].track_id = track_id;
+        if (track->getIndex() >= 0 && track->getIndex() < 2) {
+            _track_memo[track->getIndex()] = nullptr;
+        }
     }
 
     // 尝试音视频同步  [AUTO-TRANSLATED:5f8b8040]

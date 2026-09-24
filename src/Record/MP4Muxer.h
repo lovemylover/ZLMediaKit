@@ -109,6 +109,9 @@ private:
         FrameMergerImp merger;
     };
     std::unordered_map<int, MP4Track> _tracks;
+    // 2槽memo缓存，避免每帧unordered_map查找（index常规仅0/1；addTrack插入后失效，resetTracks清空）
+    // 2-slot memo cache to avoid per-frame unordered_map lookup (index is typically 0/1; invalidated on addTrack insert, cleared on resetTracks)
+    MP4Track *_track_memo[2] = { nullptr, nullptr };
 };
 
 class MP4Muxer : public MP4MuxerInterface{
