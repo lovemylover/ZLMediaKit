@@ -1,0 +1,36 @@
+src/Http/WebSocketSplitter.cpp
+  s_0c553560de6065::t_099322d8aaf6cc 209
+  s_0c553560de6065::t_99ec8d2a4603f4 157-159,187-193,210-234
+  s_0c553560de6065::t_e05f88e838637a 235
+src/Rtmp/FlvMuxer.h
+  s_0c553560de6065::t_130a7d91a7d13e 33-36
+src/Http/HttpSession.cpp
+  s_0c553560de6065::t_87ead74f79bdba 959
+  s_0c553560de6065::t_f8799b38969e73 960-968
+  s_0c553560de6065::t_720e0f67479990 942-944
+src/Http/HttpSession.h
+  s_0c553560de6065::t_1dee620eec6d6b 118-124,126
+  s_0c553560de6065::t_1c45cd2c214317 125
+  s_0c553560de6065::t_2cfed083a485e8 117
+src/Http/WebSocketSplitter.h
+  s_0c553560de6065::t_da71aa70cd475e 118-132,134-136,138-139,141-143
+  s_0c553560de6065::t_cba1649fb7a1d5 145
+  s_0c553560de6065::t_4f37a3e3748672 137,140
+  s_0c553560de6065::t_76a2443c52d6df 144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "3691bb5b438b10469d61cc8e1701d091df6398d4",
+  "prompts": {},
+  "sessions": {
+    "s_0c553560de6065": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5e502722-6752-44af-9e0c-210878558f9a",
+        "model": "deepseek-v4.1-flash"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
