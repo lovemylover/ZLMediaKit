@@ -1,0 +1,24 @@
+srt/SrtTransport.hpp
+  s_69e36996673e24::t_6e951dc7aa1583 163-168
+srt/SrtTransport.cpp
+  s_69e36996673e24::t_d37cef290b6e55 751
+  s_69e36996673e24::t_2a906610282cbd 40
+srt/Packet.cpp
+  s_69e36996673e24::t_aa76290ecc34fa 53-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "22606c9d67a292316e6798e73ab2a704b3248deb",
+  "prompts": {},
+  "sessions": {
+    "s_69e36996673e24": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "37d90192-93a4-410f-8b19-dbb5c2128f48",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
