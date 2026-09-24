@@ -37,6 +37,7 @@ SrtTransport::SrtTransport(const EventPoller::Ptr &poller)
     _pkt_recv_rate_context = std::make_shared<PacketRecvRateContext>(_start_timestamp);
     //_recv_rate_context = std::make_shared<RecvRateContext>(_start_timestamp);
     _estimated_link_capacity_context = std::make_shared<EstimatedLinkCapacityContext>(_start_timestamp);
+    _data_packet_pool.setSize(8);
 }
 
 SrtTransport::~SrtTransport() {
@@ -747,7 +748,7 @@ void SrtTransport::sendShutDown() {
 }
 
 void SrtTransport::handleDataPacket(uint8_t *buf, int len, struct sockaddr_storage *addr) {
-    DataPacket::Ptr pkt = std::make_shared<DataPacket>();
+    DataPacket::Ptr pkt = _data_packet_pool.obtain2();
     pkt->loadFromData(buf, len);
 
     if (_crypto) {

@@ -160,6 +160,12 @@ private:
 
     ResourcePool<BufferRaw> _packet_pool;
 
+    // DataPacket 每连接池，消除收流热路径每包 make_shared 堆分配
+    // 池内对象复用时会保留约 1.5KB _data 缓冲（SRT MTU 1500），setSize(8) 控制内存上限约 12KB/连接
+    // Per-connection DataPacket pool, eliminating per-packet make_shared heap allocation on the receive hot path
+    // Pooled objects retain ~1.5KB _data buffer on reuse (SRT MTU 1500); setSize(8) caps memory at ~12KB/connection
+    ResourcePool<DataPacket> _data_packet_pool;
+
     //检测超时的定时器
     Timer::Ptr _timer;
     //刷新计时器

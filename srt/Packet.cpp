@@ -50,7 +50,11 @@ bool DataPacket::loadFromData(uint8_t *buf, size_t len) {
     dst_socket_id = loadUint32(ptr);
     ptr += 4;
 
-    _data = BufferRaw::create();
+    // 懒创建+复用：池化对象第二次起 _data 已存在，assign 内部 setCapacity ≤1501 < 2048 走复用分支，零分配
+    // Lazy create + reuse: from the second pool reuse, _data already exists; assign's setCapacity ≤1501 < 2048 hits the reuse branch, zero allocation
+    if (!_data) {
+        _data = BufferRaw::create();
+    }
     _data->assign((char *)(buf), len);
     return true;
 }
