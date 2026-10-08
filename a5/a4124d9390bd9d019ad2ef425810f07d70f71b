@@ -1,0 +1,20 @@
+ext-codec/H264Rtp.cpp
+  s_e2b40eda160246::t_30051a9fa54e46 244-245,248-250,253,258,267,275,277
+  s_e2b40eda160246::t_b99b4b96729b00 106-112,116,127,139,142
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "a5a4124d9390bd9d019ad2ef425810f07d70f71b",
+  "prompts": {},
+  "sessions": {
+    "s_e2b40eda160246": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cb1854bb-3f2a-4e17-b130-00d53a830f20",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
