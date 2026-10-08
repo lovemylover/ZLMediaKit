@@ -31,6 +31,10 @@ bool G711RtpEncoder::inputFrame(const Frame::Ptr &frame) {
         in_pts = frame->pts();
         // G711压缩率固定是2倍
         _pkt_bytes = _pkt_dur_ms * _channels * (_sample_bit / 8) * _sample_rate / 1000 / 2;
+    } else if (_buffer.size() == 0) {
+        // 上一次 inputFrame 的 while 循环已把 _buffer 消费为 0，常见稳态
+        // 直接赋值，跳过 0 * _pkt_dur_ms / _pkt_bytes 这条 mul+idiv
+        in_pts = frame->pts();
     } else {
         in_pts = frame->pts() - _buffer.size() * _pkt_dur_ms / _pkt_bytes;
     }
