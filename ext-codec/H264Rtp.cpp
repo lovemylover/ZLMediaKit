@@ -13,25 +13,6 @@
 
 namespace mediakit{
 
-#pragma pack(push, 1)
-
-class FuFlags {
-public:
-#if __BYTE_ORDER == __BIG_ENDIAN
-    unsigned start_bit: 1;
-    unsigned end_bit: 1;
-    unsigned reserved: 1;
-    unsigned nal_type: 5;
-#else
-    unsigned nal_type: 5;
-    unsigned reserved: 1;
-    unsigned end_bit: 1;
-    unsigned start_bit: 1;
-#endif
-};
-
-#pragma pack(pop)
-
 H264RtpDecoder::H264RtpDecoder() {
     _frame = obtainFrame();
 }
@@ -122,13 +103,17 @@ bool H264RtpDecoder::unpackStapA(const RtpPacket::Ptr &rtp, const uint8_t *ptr, 
 }
 
 bool H264RtpDecoder::mergeFu(const RtpPacket::Ptr &rtp, const uint8_t *ptr, ssize_t size, uint64_t stamp, uint16_t seq){
-    auto nal_suffix = *ptr & (~0x1F);
-    FuFlags *fu = (FuFlags *) (ptr + 1);
-    if (fu->start_bit) {
+    auto fu_indicator = ptr[0];
+    auto fu_header    = ptr[1];
+    bool is_start     = (fu_header & 0x80u) != 0;
+    bool is_end       = (fu_header & 0x40u) != 0;
+    uint8_t nal_type  = fu_header & 0x1Fu;
+    auto nal_suffix   = fu_indicator & (~0x1F);
+    if (is_start) {
         // 该帧的第一个rtp包  [AUTO-TRANSLATED:a9581a23]
         // The first rtp packet of this frame
         _frame->_buffer.assign("\x00\x00\x00\x01", 4);
-        _frame->_buffer.push_back(nal_suffix | fu->nal_type);
+        _frame->_buffer.push_back(nal_suffix | nal_type);
         _frame->_pts = stamp;
         _fu_dropped = false;
     }
@@ -139,7 +124,7 @@ bool H264RtpDecoder::mergeFu(const RtpPacket::Ptr &rtp, const uint8_t *ptr, ssiz
         return false;
     }
 
-    if (!fu->start_bit && seq != (uint16_t) (_last_seq + 1)) {
+    if (!is_start && seq != (uint16_t) (_last_seq + 1)) {
         // 中间的或末尾的rtp包，其seq必须连续，否则说明rtp丢包，那么该帧不完整，必须得丢弃  [AUTO-TRANSLATED:6953b332]
         // The middle or end rtp packet, its seq must be continuous, otherwise it indicates that the rtp packet is lost, then the frame is incomplete and must be discarded
         _fu_dropped = true;
@@ -151,10 +136,10 @@ bool H264RtpDecoder::mergeFu(const RtpPacket::Ptr &rtp, const uint8_t *ptr, ssiz
     // Append data
     _frame->_buffer.append((char *) ptr + 2, size - 2);
 
-    if (!fu->end_bit) {
+    if (!is_end) {
         // 非末尾包  [AUTO-TRANSLATED:2e43ac3c]
         // Not the end packet
-        return fu->start_bit ? (_frame->keyFrame() || _frame->configFrame()) : false;
+        return is_start ? (_frame->keyFrame() || _frame->configFrame()) : false;
     }
 
     // 确保下一次fu必须收到第一个包  [AUTO-TRANSLATED:491d81ec]
@@ -256,21 +241,21 @@ void H264RtpEncoder::packRtpFu(const char *ptr, size_t len, uint64_t pts, bool i
     // 末尾5bit为nalu type，固定为28(FU-A)  [AUTO-TRANSLATED:6293f1a9]
     // The last 5 bits are the nalu type, fixed to 28 (FU-A)
     auto fu_char_0 = (ptr[0] & (~0x1F)) | 28;
-    auto fu_char_1 = H264_TYPE(ptr[0]);
-    FuFlags *fu_flags = (FuFlags *) (&fu_char_1);
-    fu_flags->start_bit = 1;
+    auto nal_type  = ptr[0] & 0x1F;
+    uint8_t fu_indicator = 0x80u | nal_type;
 
     size_t offset = 1;
-    while (!fu_flags->end_bit) {
-        if (!fu_flags->start_bit && len <= offset + packet_size) {
+    for (;;) {
+        bool is_end = !(fu_indicator & 0x80u) && len <= offset + packet_size;
+        if (is_end) {
             //FU-A end
             packet_size = len - offset;
-            fu_flags->end_bit = 1;
+            fu_indicator = 0x40u | nal_type;
         }
 
         // 传入nullptr先不做payload的内存拷贝  [AUTO-TRANSLATED:1858cf77]
         // Pass in nullptr first, do not copy the payload memory
-        auto rtp = getRtpInfo().makeRtp(TrackVideo, nullptr, packet_size + 2, fu_flags->end_bit && is_mark, pts);
+        auto rtp = getRtpInfo().makeRtp(TrackVideo, nullptr, packet_size + 2, is_end && is_mark, pts);
         // rtp payload 负载部分  [AUTO-TRANSLATED:aecf73cc]
         // rtp payload load part
         uint8_t *payload = rtp->getPayload();
@@ -279,7 +264,7 @@ void H264RtpEncoder::packRtpFu(const char *ptr, size_t len, uint64_t pts, bool i
         payload[0] = fu_char_0;
         // FU-A 第2个字节  [AUTO-TRANSLATED:6b4540bb]
         // FU-A second byte
-        payload[1] = fu_char_1;
+        payload[1] = fu_indicator;
         // H264 数据  [AUTO-TRANSLATED:79204239]
         // H264 data
         memcpy(payload + 2, (uint8_t *) ptr + offset, packet_size);
@@ -287,8 +272,9 @@ void H264RtpEncoder::packRtpFu(const char *ptr, size_t len, uint64_t pts, bool i
         // Input to the rtp ring buffer
         RtpCodec::inputRtp(rtp, gop_pos);
 
+        if (is_end) break;
         offset += packet_size;
-        fu_flags->start_bit = 0;
+        fu_indicator = nal_type;
     }
 }
 
