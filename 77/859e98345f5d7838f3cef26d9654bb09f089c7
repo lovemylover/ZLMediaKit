@@ -1,0 +1,23 @@
+src/Rtp/Decoder.cpp
+  s_e2b40eda160246::t_ec1a23e8e6f854 156
+  s_e2b40eda160246::t_8cb644d1ffea75 122
+src/Rtp/Decoder.h
+  s_e2b40eda160246::t_4655906d0d1261 17
+  s_e2b40eda160246::t_28ecde420a8461 76-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "77859e98345f5d7838f3cef26d9654bb09f089c7",
+  "prompts": {},
+  "sessions": {
+    "s_e2b40eda160246": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cb1854bb-3f2a-4e17-b130-00d53a830f20",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
