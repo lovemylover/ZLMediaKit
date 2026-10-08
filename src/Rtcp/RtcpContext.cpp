@@ -167,8 +167,12 @@ void RtcpContextForRecv::onRtp(
         if (_last_rtp_sys_stamp) {
             // 计算时间戳抖动值  [AUTO-TRANSLATED:cd3571b4]
             // Calculate the timestamp jitter value
+            if (_cached_sample_rate != sample_rate) {
+                _cached_sample_rate = sample_rate;
+                _samples_per_ms = sample_rate / 1000.0;
+            }
             double diff = double(
-                (int64_t(sys_stamp) - int64_t(_last_rtp_sys_stamp)) * (sample_rate / double(1000.0))
+                (int64_t(sys_stamp) - int64_t(_last_rtp_sys_stamp)) * _samples_per_ms
                 - (int64_t(stamp) - int64_t(_last_rtp_stamp)));
             if (diff < 0) {
                 diff = -diff;

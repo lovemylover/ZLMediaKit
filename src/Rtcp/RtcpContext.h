@@ -205,6 +205,10 @@ private:
     // 上次收到sr时的系统时间戳,单位毫秒  [AUTO-TRANSLATED:044fa0d5]
     // System timestamp when the last SR was received, unit is millisecond
     uint64_t _last_sr_ntp_sys = 0;
+    // 缓存采样率对应的每毫秒采样数，避免每包浮点除法  [AUTO-TRANSLATED:0]
+    // Cached samples per millisecond for the sample rate, avoiding per-packet floating-point division
+    uint32_t _cached_sample_rate = 0;
+    double _samples_per_ms = 0;
 };
 
 } // namespace mediakit
