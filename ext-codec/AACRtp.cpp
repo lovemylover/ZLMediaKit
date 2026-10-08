@@ -96,11 +96,17 @@ bool AACRtpDecoder::inputRtp(const RtpPacket::Ptr &rtp, bool key_pos) {
 
     // 每个audio unit时间戳增量  [AUTO-TRANSLATED:0345240c]
     // Timestamp increment for each audio unit
-    auto dts_inc = static_cast<int64_t>(stamp - _last_dts) / au_header_count;
-    if (dts_inc < 0 || dts_inc > 100) {
-        // 时间戳增量异常，忽略  [AUTO-TRANSLATED:d2750ef8]
-        // Timestamp increment anomaly, ignore
+    int64_t dts_inc;
+    if (au_header_count == 1) {
+        // 单 AU 包：循环内 i*dts_inc = 0*dts_inc = 0，dts_inc 不参与输出
         dts_inc = 0;
+    } else {
+        dts_inc = static_cast<int64_t>(stamp - _last_dts) / au_header_count;
+        if (dts_inc < 0 || dts_inc > 100) {
+            // 时间戳增量异常，忽略  [AUTO-TRANSLATED:d2750ef8]
+            // Timestamp increment anomaly, ignore
+            dts_inc = 0;
+        }
     }
 
     for (auto i = 0u; i < (size_t)au_header_count; ++i) {
