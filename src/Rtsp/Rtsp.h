@@ -134,6 +134,9 @@ public:
     // Return the starting address of the ext segment, return nullptr if it does not exist
     uint8_t *getExtData();
 
+    // 返回有效负载偏移量  [AUTO-TRANSLATED:47496d37]
+    // Return the valid payload offset
+    size_t getPayloadOffset() const;
     // 返回有效负载指针,跳过csrc、ext  [AUTO-TRANSLATED:139a5683]
     // Return the valid payload pointer, skip csrc, ext
     uint8_t *getPayloadData();
@@ -145,9 +148,6 @@ public:
     std::string dumpString(size_t rtp_size) const;
 
 private:
-    // 返回有效负载偏移量  [AUTO-TRANSLATED:47496d37]
-    // Return the valid payload offset
-    size_t getPayloadOffset() const;
     // 返回padding长度  [AUTO-TRANSLATED:6dabd44d]
     // Return the padding length
     size_t getPaddingSize(size_t rtp_size) const;
@@ -202,9 +202,21 @@ public:
 
     static Ptr create();
 
+    // 设置缓存的payload偏移与长度，避免收发路径每包重复解析CC/EXT/padding
+    // Set cached payload offset and size to avoid repeated CC/EXT/padding parsing per packet
+    void setCachedPayload(size_t offset, size_t size) {
+        _payload_offset = offset;
+        _payload_size = size;
+    }
+
 private:
     friend class toolkit::ResourcePool_l<RtpPacket>;
     RtpPacket() = default;
+
+    // payload缓存哨兵，(size_t)-1表示未缓存，需走原逻辑现算
+    // payload cache sentinel, (size_t)-1 means uncached, fall back to original logic
+    size_t _payload_offset = (size_t)-1;
+    size_t _payload_size = (size_t)-1;
 
 private:
     // 对象个数统计  [AUTO-TRANSLATED:f4a012d0]

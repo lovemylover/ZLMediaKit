@@ -47,7 +47,9 @@ RtpPacket::Ptr RtpTrack::inputRtp(TrackType type, int sample_rate, uint8_t *ptr,
     if (header->version != RtpPacket::kRtpVersion) {
         throw BadRtpException("invalid rtp version");
     }
-    if (header->getPayloadSize(len) < 0) {
+    auto payload_offset = header->getPayloadOffset();
+    auto payload_size = header->getPayloadSize(len);
+    if (payload_size < 0) {
         // rtp有效负载小于0，非法  [AUTO-TRANSLATED:07eb3ec3]
         // RTP payload is less than 0, illegal
         throw BadRtpException("invalid rtp payload size");
@@ -105,6 +107,9 @@ RtpPacket::Ptr RtpTrack::inputRtp(TrackType type, int sample_rate, uint8_t *ptr,
     // 拷贝rtp  [AUTO-TRANSLATED:3a2466c2]
     // Copy RTP
     memcpy(&data[4], ptr, len);
+    // 缓存payload偏移与长度，避免下游解码器每包重复解析CC/EXT/padding
+    // Cache payload offset and size to avoid downstream decoders re-parsing CC/EXT/padding per packet
+    rtp->setCachedPayload(RtpPacket::kRtpTcpHeaderSize + RtpPacket::kRtpHeaderSize + payload_offset, payload_size);
     if (_disable_ntp) {
         // 不支持ntp时间戳，例如国标推流，那么直接使用rtp时间戳  [AUTO-TRANSLATED:20085979]
         // Does not support NTP timestamp, such as national standard streaming, so directly use RTP timestamp

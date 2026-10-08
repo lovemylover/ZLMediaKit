@@ -43,6 +43,9 @@ RtpPacket::Ptr RtpInfo::makeRtp(TrackType type, const void* data, size_t len, bo
     header->stamp = htonl(static_cast<uint32_t>(stamp * _tick_per_ms));
     header->ssrc = htonl(_ssrc);
     rtp->ntp_stamp = stamp;
+    // 缓存payload偏移与长度，发送侧无CC/EXT/padding，offset恒定
+    // Cache payload offset and size, sending side has no CC/EXT/padding, offset is fixed
+    rtp->setCachedPayload(RtpPacket::kRtpTcpHeaderSize + RtpPacket::kRtpHeaderSize, len);
     // 有效负载  [AUTO-TRANSLATED:8530a274]
     // payload
     if (data) {

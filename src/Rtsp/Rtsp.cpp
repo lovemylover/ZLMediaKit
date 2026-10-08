@@ -691,10 +691,16 @@ uint32_t RtpPacket::getSSRC() const {
 }
 
 uint8_t *RtpPacket::getPayload() {
+    if (_payload_offset != (size_t)-1) {
+        return (uint8_t *)data() + _payload_offset;
+    }
     return getHeader()->getPayloadData();
 }
 
 size_t RtpPacket::getPayloadSize() const {
+    if (_payload_size != (size_t)-1) {
+        return _payload_size;
+    }
     // 需除去rtcp over tcp 4个字节长度  [AUTO-TRANSLATED:936f6f5b]
     // Need to remove the rtcp over tcp 4 byte length
     return getHeader()->getPayloadSize(size() - kRtpTcpHeaderSize);
@@ -708,6 +714,9 @@ RtpPacket::Ptr RtpPacket::create() {
     });
     auto ret = packet_pool.obtain2();
     ret->setSize(0);
+    // 重置payload缓存哨兵，防止池化对象复用时的陈旧值
+    // Reset payload cache sentinel to prevent stale values from pool reuse
+    ret->setCachedPayload((size_t)-1, (size_t)-1);
     return ret;
 #else
     return Ptr(new RtpPacket);
