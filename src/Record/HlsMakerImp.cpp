@@ -9,7 +9,7 @@
  */
 
 #include <ctime>
-#include <iomanip> 
+#include <cstdio>
 #include <sys/stat.h>
 #include "HlsMakerImp.h"
 #include "Util/util.h"
@@ -135,12 +135,15 @@ void HlsMakerImp::saveCurrentDir() {
     if (isFmp4()) {
         index_str += "#EXT-X-MAP:URI=\"init.mp4\"\n";
     }
-    stringstream ss;
+    // %.3g 等价于 defaultfloat + setprecision(3)（C++标准规定），消除 stringstream 构造与中间拷贝
+    char buf[64];
     for (auto &t : _current_dir_seg_list) {
-        ss << "#EXTINF:" << std::setprecision(3) << std::get<0>(t) / 1000.0 << ",\n" << std::get<1>(t) << "\n";
+        int len = snprintf(buf, sizeof(buf), "#EXTINF:%.3g,\n", std::get<0>(t) / 1000.0);
+        index_str.append(buf, len);
+        index_str += std::get<1>(t);
+        index_str += '\n';
     }
     _current_dir_seg_list.clear();
-    index_str += ss.str();
     index_str += "#EXT-X-ENDLIST\n";
 
     /** 写入该目录的m3u8文件 **/

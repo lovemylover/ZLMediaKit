@@ -8,7 +8,7 @@
  * may be found in the AUTHORS file in the root of the source tree.
  */
 
-#include <iomanip>
+#include <cstdio>
 #include "HlsMaker.h"
 #include "Common/config.h"
 
@@ -27,16 +27,12 @@ HlsMaker::HlsMaker(bool is_fmp4, float seg_duration, uint32_t seg_number, bool s
 
 void HlsMaker::makeIndexFile(bool include_delay, bool eof) {
     GET_CONFIG(uint32_t, segDelay, Hls::kSegmentDelay);
-    GET_CONFIG(uint32_t, segRetain, Hls::kSegmentRetain);
-    std::deque<std::tuple<int, std::string>> temp(_seg_dur_list);
-    if (!include_delay && _seg_number) {
-        while (temp.size() > _seg_number) {
-            temp.pop_front();
-        }
-    }
+    // 偏移迭代替代 deque 深拷贝：保留最后 _seg_number 条，与原 pop_front 裁剪语义等价
+    size_t start = (!include_delay && _seg_number && _seg_dur_list.size() > _seg_number)
+        ? _seg_dur_list.size() - _seg_number : 0;
     int maxSegmentDuration = 0;
-    for (auto &tp : temp) {
-        int dur = std::get<0>(tp);
+    for (auto it = _seg_dur_list.begin() + start; it != _seg_dur_list.end(); ++it) {
+        int dur = std::get<0>(*it);
         if (dur > maxSegmentDuration) {
             maxSegmentDuration = dur;
         }
@@ -75,11 +71,14 @@ void HlsMaker::makeIndexFile(bool include_delay, bool eof) {
         index_str += "#EXT-X-MAP:URI=\"init.mp4\"\n";
     }
 
-    stringstream ss;
-    for (auto &tp : temp) {
-        ss << "#EXTINF:" << std::setprecision(3) << std::get<0>(tp) / 1000.0 << ",\n" << std::get<1>(tp) << "\n";
+    // %.3g 等价于 defaultfloat + setprecision(3)（C++标准规定），消除 stringstream 构造与 num_put 虚调用
+    char buf[64];
+    for (auto it = _seg_dur_list.begin() + start; it != _seg_dur_list.end(); ++it) {
+        int len = snprintf(buf, sizeof(buf), "#EXTINF:%.3g,\n", std::get<0>(*it) / 1000.0);
+        index_str.append(buf, len);
+        index_str += std::get<1>(*it);
+        index_str += '\n';
     }
-    index_str += ss.str();
 
     if (eof) {
         index_str += "#EXT-X-ENDLIST\n";
