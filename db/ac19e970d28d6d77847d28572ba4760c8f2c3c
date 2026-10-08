@@ -1,0 +1,21 @@
+src/Common/MultiMediaSourceMuxer.h
+  s_418ef18f6b96ff::t_1b82ee0b3342f8 279-280
+src/Common/MultiMediaSourceMuxer.cpp
+  s_418ef18f6b96ff::t_f248d5ccbdc0e9 947-949
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "dbac19e970d28d6d77847d28572ba4760c8f2c3c",
+  "prompts": {},
+  "sessions": {
+    "s_418ef18f6b96ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f101acfe-128c-4b58-86b5-db3353a63f74",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
