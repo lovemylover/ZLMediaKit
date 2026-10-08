@@ -1491,7 +1491,7 @@ void WebRtcTransportImp::onSendTwcc(uint32_t ssrc, const string &twcc_fci) {
 ///////////////////////////////////////////////////////////////////
 
 void WebRtcTransportImp::onSortedRtp(MediaTrack &track, const string &rid, RtpPacket::Ptr rtp) {
-    if (track.media->type == TrackVideo && _pli_ticker.elapsedTime() > 2000) {
+    if (track.media->type == TrackVideo && (++_pli_check_cnt & 0x3F) == 0 && _pli_ticker.elapsedTime() > 2000) {
         // 定期发送pli请求关键帧，方便非rtc等协议  [AUTO-TRANSLATED:b992f020]
         // Regularly send pli requests for key frames, which is convenient for non-rtc protocols
         _pli_ticker.resetTime();
@@ -1540,7 +1540,7 @@ void WebRtcTransportImp::onSendRtp(const RtpPacket::Ptr &rtp, bool flush, bool r
     sendRtpPacket(rtp->data() + RtpPacket::kRtpTcpHeaderSize, rtp->size() - RtpPacket::kRtpTcpHeaderSize, flush, &ctx);
     _bytes_usage += rtp->size() - RtpPacket::kRtpTcpHeaderSize;
 
-    if (_rtcp_sr_send_ticker.elapsedTime() > 5000) {
+    if ((++_sr_check_cnt & 0x3F) == 0 && _rtcp_sr_send_ticker.elapsedTime() > 5000) {
         _rtcp_sr_send_ticker.resetTime();
         if (track->rtcp_context_send) {
             auto sr = track->rtcp_context_send->createRtcpSR(track->answer_ssrc_rtp);
