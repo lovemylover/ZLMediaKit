@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <memory>
 #include <functional>
+#include <array>
 #include "Common/MediaSink.h"
 
 namespace mediakit {
@@ -72,6 +73,21 @@ private:
     };
     FrameMergerImp *_video_merge = nullptr;
     std::unordered_map<int, std::pair<Track::Ptr, FrameMergerImp> > _tracks;
+
+    // 2 槽 stream memo：稳态 stream 集合 <= 2（video/audio），命中跳过 hash 查找。
+    // std::unordered_map 节点地址稳定，插入/rehash 不 invalidate，可安全缓存指针。
+    std::pair<Track::Ptr, FrameMergerImp> *getTrackRef(int stream) {
+        for (auto &slot : _track_memo) {
+            if (slot.first == stream && slot.second) return slot.second;
+        }
+        auto &ref = _tracks[stream];
+        auto &slot = _track_memo[_track_memo_next++ & 1];
+        slot.first = stream;
+        slot.second = &ref;
+        return &ref;
+    }
+    std::array<std::pair<int, std::pair<Track::Ptr, FrameMergerImp>*>, 2> _track_memo{ {{-1, nullptr}, {-1, nullptr}} };
+    size_t _track_memo_next = 0;
 };
 
 }//namespace mediakit

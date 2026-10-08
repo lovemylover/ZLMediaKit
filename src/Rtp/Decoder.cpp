@@ -119,7 +119,7 @@ void DecoderImp::onDecode(int stream, int codecid, int flags, int64_t pts, int64
     if (codec == CodecInvalid) {
         return;
     }
-    auto &ref = _tracks[stream];
+    auto &ref = *getTrackRef(stream);
     if (!ref.first) {
         onTrack(stream, Factory::getTrackByCodecId(codec));
     }
@@ -153,7 +153,7 @@ void DecoderImp::onTrack(int index, const Track::Ptr &track) {
         return;
     }
     track->setIndex(index);
-    auto &ref = _tracks[index];
+    auto &ref = *getTrackRef(index);
     if (ref.first) {
         // WarnL << "Already existed a same track: " << index << ", codec: " << track->getCodecName();
         return;
