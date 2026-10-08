@@ -52,7 +52,13 @@ void RtspMuxer::onRtp(RtpPacket::Ptr in, bool is_key) {
     } else {
         // 点播情况下设置ntp时间戳为rtp时间戳加基准ntp时间戳  [AUTO-TRANSLATED:b9f77de4]
         // In on-demand scenarios, set the NTP timestamp to the RTP timestamp plus the base NTP timestamp
-        in->ntp_stamp = _ntp_stamp_start + (in->getStamp() * uint64_t(1000) / in->sample_rate);
+        auto &ref = getTrackInfo(in->track_index);
+        // 防御：sample_rate 正常流内固定，此处不一致时重算因子
+        if (in->sample_rate != ref.sample_rate) {
+            ref.sample_rate = in->sample_rate;
+            ref.ms_per_tick = in->sample_rate ? 1000.0 / in->sample_rate : 0;
+        }
+        in->ntp_stamp = _ntp_stamp_start + (uint64_t)(in->getStamp() * ref.ms_per_tick);
     }
     _rtpRing->write(std::move(in), is_key);
 }
@@ -134,6 +140,10 @@ bool RtspMuxer::addTrack(const Track::Ptr &track) {
         auto mtu = track->getTrackType() == TrackVideo ? video_mtu : audio_mtu;
         encoder->setRtpInfo(ssrc, mtu, sdp->getSampleRate(), sdp->getPayloadType(), 2 * track->getTrackType(), track->getIndex());
     }
+
+    // 缓存采样率与换算因子，供 onRtp 点播路径使用
+    ref.sample_rate = sdp->getSampleRate();
+    ref.ms_per_tick = ref.sample_rate ? 1000.0 / ref.sample_rate : 0;
 
     // 设置rtp输出环形缓存  [AUTO-TRANSLATED:5ac7e24a]
     // Set the RTP output circular buffer

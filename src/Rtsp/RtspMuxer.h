@@ -124,6 +124,10 @@ private:
         uint32_t rtp_stamp { 0 };
         uint64_t ntp_stamp { 0 };
         RtpCodec::Ptr encoder;
+        // sample_rate 在流生命周期内固定（addTrack 时由 SDP 确定），缓存以消除 onRtp 点播路径每包整数除法
+        uint32_t sample_rate { 0 };
+        // 1000.0 / sample_rate；标准采样率下双精度乘法截断与整数除法 stamp*1000/rate 一致（已验证）
+        double ms_per_tick { 0 };
     };
 
     // 获取 track 对应的 TrackInfo，优先命中 memo，miss 时回退哈希查找并回填
