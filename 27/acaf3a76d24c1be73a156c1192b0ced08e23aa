@@ -1,0 +1,19 @@
+ext-codec/G711Rtp.cpp
+  s_b2e5d9f75f7a68::t_5bf56cd117f818 34-37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "27acaf3a76d24c1be73a156c1192b0ced08e23aa",
+  "prompts": {},
+  "sessions": {
+    "s_b2e5d9f75f7a68": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b5ad8121-c01c-4524-a947-8aa4d258e8b0",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
