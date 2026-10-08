@@ -1369,7 +1369,7 @@ void WebRtcTransportImp::onRtp(const char *buf, size_t len, uint64_t stamp_ms) {
         slot.track = memo_track;
     }
 
-    if (_rtcp_rr_send_ticker.elapsedTime() > 5000) {
+    if ((++_rtcp_rr_check_cnt & 0x3F) == 0 && _rtcp_rr_send_ticker.elapsedTime() > 5000) {
         _rtcp_rr_send_ticker.resetTime();
         for (auto& it : _ssrc_to_track) {
             auto ssrc = it.first;

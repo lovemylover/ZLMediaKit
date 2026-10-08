@@ -388,6 +388,8 @@ private:
 
     toolkit::Ticker _rtcp_sr_send_ticker;
     toolkit::Ticker _rtcp_rr_send_ticker;
+    // RTCP RR发送检查的包计数节流，每64包才检查一次elapsedTime，避免每包原子load
+    uint32_t _rtcp_rr_check_cnt = 0;
 
     // twcc rtcp发送上下文对象  [AUTO-TRANSLATED:aef6476a]
     // twcc rtcp send context object
