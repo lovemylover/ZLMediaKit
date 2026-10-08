@@ -74,6 +74,7 @@ public:
         _sample_rate = sample_rate;
         _interleaved = interleaved;
         _track_index = track_index;
+        _tick_per_ms = (double)sample_rate / 1000.0;
     }
 
     // 返回rtp负载最大长度  [AUTO-TRANSLATED:0a8ee7d9]
@@ -90,6 +91,7 @@ private:
     uint16_t _seq = 0;
     uint32_t _ssrc;
     uint32_t _sample_rate;
+    double _tick_per_ms = 0;
     int _track_index;
     size_t _mtu_size;
 };
