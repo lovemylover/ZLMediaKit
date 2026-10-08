@@ -1,0 +1,21 @@
+src/Rtcp/RtcpContext.cpp
+  s_a40f336d8a9fbd::t_70d75222faeb23 170-173,175
+src/Rtcp/RtcpContext.h
+  s_a40f336d8a9fbd::t_5896bea1a99d5b 208-211
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "60f316c3323956c93713a37258b4932c3a416cec",
+  "prompts": {},
+  "sessions": {
+    "s_a40f336d8a9fbd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f197c3fb-26f2-4e0c-9e8a-ed6d5b7bdeb8",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
