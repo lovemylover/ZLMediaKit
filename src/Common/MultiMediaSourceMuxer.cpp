@@ -944,6 +944,9 @@ bool MultiMediaSourceMuxer::onTrackFrame_l(const Frame::Ptr &frame_in) {
 }
 
 bool MultiMediaSourceMuxer::isEnabled(){
+    if (_is_enable && (++_enable_check_cnt & 0x3F) != 0) {
+        return _is_enable;
+    }
     GET_CONFIG(uint32_t, stream_none_reader_delay_ms, General::kStreamNoneReaderDelayMS);
     if (!_is_enable || _last_check.elapsedTime() > stream_none_reader_delay_ms) {
         // 无人观看时，每次检查是否真的无人观看  [AUTO-TRANSLATED:48bc59c6]

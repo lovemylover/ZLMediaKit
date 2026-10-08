@@ -276,6 +276,8 @@ private:
     MediaTuple _tuple;
     ProtocolOption _option;
     toolkit::Ticker _last_check;
+    // isEnabled检查的调用计数节流，有人观看时每64次调用才检查一次_last_check.elapsedTime()，避免每帧/每包原子load
+    uint32_t _enable_check_cnt = 0;
     std::unordered_map<int, Stamp> _stamps;
     // _stamps元素指针的memo缓存,unordered_map为节点容器,rehash不失效元素指针  [AUTO-TRANSLATED]
     // Memo cache of _stamps element pointers, unordered_map is a node container, rehash does not invalidate element pointers
