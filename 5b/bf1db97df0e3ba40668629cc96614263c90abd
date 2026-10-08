@@ -1,0 +1,24 @@
+src/Record/HlsMaker.cpp
+  s_184f02621c86a5::t_c1b3d6fbc0e3c5 74-80
+  s_184f02621c86a5::t_df5057945c4eb5 11
+  s_184f02621c86a5::t_ebf84472a78814 30-32,34-35
+src/Record/HlsMakerImp.cpp
+  s_184f02621c86a5::t_94127bdfe2d86f 12
+  s_184f02621c86a5::t_35a4541983a974 138-139,141-144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "5bbf1db97df0e3ba40668629cc96614263c90abd",
+  "prompts": {},
+  "sessions": {
+    "s_184f02621c86a5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "86974a2d-e056-4067-9899-b5545804022f",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
