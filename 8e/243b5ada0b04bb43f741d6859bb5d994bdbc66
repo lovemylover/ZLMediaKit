@@ -1,0 +1,21 @@
+src/Rtsp/RtspSession.h
+  s_86ba242e7d1ae4::t_5e8b4a25d8956a 308-309
+src/Rtsp/RtspSession.cpp
+  s_86ba242e7d1ae4::t_77335a34e540be 1263-1267
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "8e243b5ada0b04bb43f741d6859bb5d994bdbc66",
+  "prompts": {},
+  "sessions": {
+    "s_86ba242e7d1ae4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ea5b1685-cdb7-4b53-975d-27255d5a8495",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
