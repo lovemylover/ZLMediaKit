@@ -1,0 +1,21 @@
+src/Http/HttpSession.h
+  s_a67972c48c4066::t_daf05de935116c 186
+src/Http/HttpSession.cpp
+  s_a67972c48c4066::t_d7e7955fbd8600 932-936
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "3b15878454c5347ad5f1f140b70367a98216d386",
+  "prompts": {},
+  "sessions": {
+    "s_a67972c48c4066": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "02ea45ef-a820-4bd3-ab5c-77807ee5e8dd",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
