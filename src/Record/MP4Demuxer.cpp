@@ -250,8 +250,8 @@ Frame::Ptr MultiMP4Demuxer::readFrame(bool &keyFrame, bool &eof) {
             ret->setIndex(ret->getTrackType());
             auto it = _tracks.find(ret->getIndex());
             if (it != _tracks.end()) {
-                auto ret2 = std::make_shared<FrameStamp>(ret);
-                ret2->setStamp(_it->first + ret->dts(), _it->first + ret->pts());
+                auto ret2 = FrameStamp::create();
+                ret2->init(ret, _it->first + ret->dts(), _it->first + ret->pts());
                 ret = std::move(ret2);
                 it->second->inputFrame(ret);
             }

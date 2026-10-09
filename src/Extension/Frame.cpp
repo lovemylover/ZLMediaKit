@@ -61,6 +61,13 @@ void FrameStamp::init(Frame::Ptr frame, Stamp &stamp, int modify_stamp) {
     stamp.revise(_frame->dts(), _frame->pts(), _dts, _pts, modify_stamp == ProtocolOption::kModifyStampSystem);
 }
 
+void FrameStamp::init(Frame::Ptr frame, int64_t dts, int64_t pts) {
+    setIndex(frame->getIndex());
+    _frame = std::move(frame);
+    _dts = dts;
+    _pts = pts;
+}
+
 void FrameStamp::setStamp(int64_t dts, int64_t pts) {
     _dts = dts;
     _pts = pts;

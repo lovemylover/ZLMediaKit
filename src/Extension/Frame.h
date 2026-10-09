@@ -596,6 +596,8 @@ public:
     // 初始化对象池中取出的对象，替代构造函数传参  [AUTO-TRANSLATED:3c7b9d51]
     // Initialize the object obtained from the pool, replacing constructor arguments
     void init(Frame::Ptr frame, Stamp &stamp, int modify_stamp);
+    // 初始化对象池中取出的对象，直接指定时间戳，用于MP4点播等多文件时间轴偏移场景
+    void init(Frame::Ptr frame, int64_t dts, int64_t pts);
 
     FrameStamp(Frame::Ptr frame);
     FrameStamp(Frame::Ptr frame, Stamp &stamp, int modify_stamp);
