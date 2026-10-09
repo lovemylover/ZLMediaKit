@@ -1,0 +1,21 @@
+src/Rtp/PSEncoder.cpp
+  s_0a3cc412afbaad::t_2aaa0936a68b3d 17,23-47
+  s_0a3cc412afbaad::t_1d5800b9deb2a8 76
+  s_0a3cc412afbaad::t_efc732511997d6 48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "b17e0018865b87e5e019d066034be72d72045e53",
+  "prompts": {},
+  "sessions": {
+    "s_0a3cc412afbaad": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "63277e86-f4ad-4f87-bd39-6604c4602e6f",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
