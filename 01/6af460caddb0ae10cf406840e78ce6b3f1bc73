@@ -1,0 +1,21 @@
+src/Rtcp/Rtcp.cpp
+  s_86ba242e7d1ae4::t_1da23338360672 299
+  s_86ba242e7d1ae4::t_b160e0b59ffd5e 279
+  s_86ba242e7d1ae4::t_e882e7eb76f467 293
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "016af460caddb0ae10cf406840e78ce6b3f1bc73",
+  "prompts": {},
+  "sessions": {
+    "s_86ba242e7d1ae4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ea5b1685-cdb7-4b53-975d-27255d5a8495",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
