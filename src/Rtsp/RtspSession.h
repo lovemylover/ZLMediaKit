@@ -257,6 +257,8 @@ private:
     // 用于判断客户端是否超时  [AUTO-TRANSLATED:86cb328a]
     // Used to determine if the client has timed out
     toolkit::Ticker _alive_ticker;
+    // 收包 resetTime 节流计数，onRecv/onRcvPeerUdpData 共用，与 RtpSession/WebRtcTransport 同构 (0x3F 掩码)
+    uint32_t _alive_ticker_cnt = 0;
 
     // rtsp推流相关绑定的源  [AUTO-TRANSLATED:a25078d9]
     // Source bound to RTSP pushing

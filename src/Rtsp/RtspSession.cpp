@@ -119,7 +119,11 @@ void RtspSession::onManager() {
 }
 
 void RtspSession::onRecv(const Buffer::Ptr &buf) {
-    _alive_ticker.resetTime();
+    // 64包计数节流，与 RtpSession::onRtpPacket / WebRtcTransport::onRtpSecurity 同构
+    // 超时阈值 15s/60s/240s 远大于 64 包延迟(25fps约2.56s)
+    if ((++_alive_ticker_cnt & 0x3F) == 0) {
+        _alive_ticker.resetTime();
+    }
     _bytes_usage += buf->size();
     if (_on_recv) {
         //http poster的请求数据转发给http getter处理
@@ -1015,7 +1019,10 @@ void RtspSession::onRtpSorted(RtpPacket::Ptr rtp, int track_idx) {
 
 void RtspSession::onRcvPeerUdpData(int interleaved, const Buffer::Ptr &buf, const struct sockaddr_storage &addr) {
     //这是rtcp心跳包，说明播放器还存活
-    _alive_ticker.resetTime();
+    // 64包计数节流，与 onRecv 共用计数器，超时阈值远大于节流延迟
+    if ((++_alive_ticker_cnt & 0x3F) == 0) {
+        _alive_ticker.resetTime();
+    }
 
     if (interleaved % 2 == 0) {
         if (_push_src) {
