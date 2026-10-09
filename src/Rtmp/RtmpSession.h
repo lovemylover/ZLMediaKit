@@ -102,6 +102,7 @@ private:
     // 数据接收超时计时器  [AUTO-TRANSLATED:3fba518a]
     // Data reception timeout timer
     toolkit::Ticker _ticker;
+    uint32_t _ticker_cnt = 0;
     MediaInfo _media_info;
     std::weak_ptr<RtmpMediaSource> _play_src;
     AMFValue _push_metadata;

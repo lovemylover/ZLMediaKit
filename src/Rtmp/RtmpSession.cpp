@@ -65,7 +65,11 @@ void RtmpSession::onManager() {
 }
 
 void RtmpSession::onRecv(const Buffer::Ptr &buf) {
-    _ticker.resetTime();
+    // 64包计数节流，与 RtspPlayer/RtmpPlayer/WebRtcTransport 同构
+    // ticker 仅被 onManager() 15s keep_alive 超时读取，RTMP 推流/拉流 64包最坏延迟约1-2s仍安全
+    if ((++_ticker_cnt & 0x3F) == 0) {
+        _ticker.resetTime();
+    }
     _total_bytes += buf->size();
     onParseRtmp(buf->data(), buf->size());
 }
