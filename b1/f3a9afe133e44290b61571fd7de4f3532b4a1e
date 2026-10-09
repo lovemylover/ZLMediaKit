@@ -1,0 +1,22 @@
+src/Rtmp/RtmpPlayer.cpp
+  s_21bf6c59281fd8::t_c5f16fedc30eaa 131
+  s_21bf6c59281fd8::t_a069ac5c47fda7 356-360
+src/Rtmp/RtmpPlayer.h
+  s_21bf6c59281fd8::t_b7681afc6c8ad3 107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "b1f3a9afe133e44290b61571fd7de4f3532b4a1e",
+  "prompts": {},
+  "sessions": {
+    "s_21bf6c59281fd8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "812c62d6-ebab-4c21-99fd-886cf0f0a0ea",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
