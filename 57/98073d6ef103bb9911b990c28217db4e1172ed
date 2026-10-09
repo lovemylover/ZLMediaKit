@@ -1,0 +1,19 @@
+src/Common/Parser.cpp
+  s_0c4a54ffe908e4::t_0a4ae521c706df 173,175-183,185-199,202-205
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "5798073d6ef103bb9911b990c28217db4e1172ed",
+  "prompts": {},
+  "sessions": {
+    "s_0c4a54ffe908e4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2ebcbec4-74f5-443c-863b-0f2804413fa7",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
