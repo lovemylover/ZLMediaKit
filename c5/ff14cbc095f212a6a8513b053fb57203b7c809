@@ -1,0 +1,22 @@
+src/Rtsp/RtspPlayer.cpp
+  s_0c4a54ffe908e4::t_bc1f34952e05ac 887
+  s_0c4a54ffe908e4::t_25555af6c04ac8 680-683
+src/Rtsp/RtspPlayer.h
+  s_0c4a54ffe908e4::t_225cd47789a68e 207-208
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "c5ff14cbc095f212a6a8513b053fb57203b7c809",
+  "prompts": {},
+  "sessions": {
+    "s_0c4a54ffe908e4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2ebcbec4-74f5-443c-863b-0f2804413fa7",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
