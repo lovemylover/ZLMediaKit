@@ -677,7 +677,10 @@ void RtspPlayer::onRtpSorted(RtpPacket::Ptr rtppt, int trackidx) {
     if (!_first_stamp[trackidx]) {
         _first_stamp[trackidx] = _stamp[trackidx];
     }
-    _rtp_recv_ticker.resetTime();
+    // 64包节流，避免每包resetTime的vDSO开销；超时检测周期2.5s，64包延迟远小于5s阈值
+    if ((++_rtp_recv_ticker_cnt & 0x3F) == 0) {
+        _rtp_recv_ticker.resetTime();
+    }
     onRecvRTP(std::move(rtppt), _sdp_track[trackidx]);
 }
 
@@ -881,6 +884,7 @@ void RtspPlayer::onPlayResult_l(const SockException &ex, bool handshake_done) {
         // 播放成功，恢复rtp接收超时定时器  [AUTO-TRANSLATED:0ebefcb5]
         // Playback successful, restore RTP receive timeout timer
         _rtp_recv_ticker.resetTime();
+        _rtp_recv_ticker_cnt = 0;
         auto timeoutMS = (*this)[Client::kMediaTimeoutMS].as<uint64_t>();
         weak_ptr<RtspPlayer> weakSelf = static_pointer_cast<RtspPlayer>(shared_from_this());
         auto lam = [weakSelf, timeoutMS]() {

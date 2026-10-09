@@ -204,6 +204,8 @@ private:
     // 超时功能实现  [AUTO-TRANSLATED:1d603b3a]
     // Timeout function implementation
     toolkit::Ticker _rtp_recv_ticker;
+    // RTP接收计数器，每64包才resetTime一次，避免每包vDSO gettimeofday开销
+    uint32_t _rtp_recv_ticker_cnt = 0;
     std::shared_ptr<toolkit::Timer> _play_check_timer;
     std::shared_ptr<toolkit::Timer> _rtp_check_timer;
     // 服务器支持的命令  [AUTO-TRANSLATED:f7f589bf]
