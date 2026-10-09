@@ -183,6 +183,7 @@ private:
     std::string _origin;
     Parser _parser;
     toolkit::Ticker _ticker;
+    uint32_t _ticker_cnt = 0;
     TSMediaSource::RingType::RingReader::Ptr _ts_reader;
     FMP4MediaSource::RingType::RingReader::Ptr _fmp4_reader;
     // 处理content数据的callback  [AUTO-TRANSLATED:38890e8d]

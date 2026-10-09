@@ -929,7 +929,11 @@ void HttpSession::onWrite(const Buffer::Ptr &buffer, bool flush) {
         HttpSession::setSendFlushFlag(true);
     }
 
-    _ticker.resetTime();
+    // 64帧计数节流，与 RtspPlayer/RtmpPlayer/WebRtcTransport 同构
+    // ticker 仅被 onManager() 15s 保活超时读取，25fps 最坏延迟2.5s仍安全
+    if ((++_ticker_cnt & 0x3F) == 0) {
+        _ticker.resetTime();
+    }
     if (!_live_over_websocket) {
         _total_bytes_usage += buffer->size();
         send(buffer);
