@@ -75,7 +75,7 @@ bool MpegMuxer::inputFrame(const Frame::Ptr &frame) {
                 // 取视频时间戳为TS的时间戳  [AUTO-TRANSLATED:5ff7796d]
                 // Take the video timestamp as the TS timestamp.
                 _timestamp = dts;
-                _max_cache_size = 512 + 1.2 * buffer->size();
+                _max_cache_size = 512 + (uint32_t)(buffer->size() + buffer->size() / 5);
                 mpeg_muxer_input((::mpeg_muxer_t *)_context, track_ref.track_id, have_idr ? 0x0001 : 0, pts * 90LL, dts * 90LL, buffer->data(), buffer->size());
                 flushCache();
             });
@@ -96,7 +96,7 @@ bool MpegMuxer::inputFrame(const Frame::Ptr &frame) {
                 _key_pos = frame->keyFrame();
                 _timestamp = frame->dts();
             }
-            _max_cache_size = 512 + 1.2 * frame->size();
+            _max_cache_size = 512 + (uint32_t)(frame->size() + frame->size() / 5);
             mpeg_muxer_input((::mpeg_muxer_t *)_context, track_ref.track_id, frame->keyFrame() ? 0x0001 : 0, frame->pts() * 90LL, frame->dts() * 90LL, frame->data(), frame->size());
             flushCache();
             return true;
