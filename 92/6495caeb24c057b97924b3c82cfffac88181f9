@@ -1,0 +1,21 @@
+src/Rtmp/RtmpSession.cpp
+  s_a67972c48c4066::t_6d05cd460d0bde 68-72
+src/Rtmp/RtmpSession.h
+  s_a67972c48c4066::t_1dbbc67cd50aa2 105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "926495caeb24c057b97924b3c82cfffac88181f9",
+  "prompts": {},
+  "sessions": {
+    "s_a67972c48c4066": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "02ea45ef-a820-4bd3-ab5c-77807ee5e8dd",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
