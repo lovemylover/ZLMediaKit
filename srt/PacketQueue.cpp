@@ -2,6 +2,18 @@
 
 namespace SRT {
 
+// 向上取整到最近的 2 的幂，用于将环形缓冲取模优化为掩码与运算
+static uint32_t nextPow2(uint32_t v) {
+    if (v < 1) v = 1;
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v |= v >> 16;
+    return v + 1;
+}
+
 static inline bool isSeqEdge(uint32_t seq, uint32_t cap) {
     if (seq > (MAX_SEQ - cap)) {
         return true;
@@ -243,7 +255,9 @@ PacketRecvQueue::PacketRecvQueue(uint32_t max_size, uint32_t init_seq, uint32_t 
     , _pkt_latency(latency)
     , _pkt_expected_seq(init_seq)
     , _srt_flag(flag)
-    , _pkt_buf(max_size) {}
+    , _ring_capacity(nextPow2(max_size))
+    , _ring_mask(_ring_capacity - 1)
+    , _pkt_buf(_ring_capacity) {}
 
 bool  PacketRecvQueue::TLPKTDrop(){
     return (_srt_flag&HSExtMessage::HS_EXT_MSG_TLPKTDROP) && (_srt_flag &HSExtMessage::HS_EXT_MSG_TSBPDRCV);
@@ -256,7 +270,7 @@ bool PacketRecvQueue::inputPacket(DataPacket::Ptr pkt, std::list<DataPacket::Ptr
             _size--;
             _pkt_buf[_start] = nullptr;
         }
-        _start = (_start + 1) % _pkt_cap;
+        _start = (_start + 1) & _ring_mask;
         _pkt_expected_seq = genExpectedSeq(_pkt_expected_seq + 1);
     }
 
@@ -268,7 +282,7 @@ bool PacketRecvQueue::inputPacket(DataPacket::Ptr pkt, std::list<DataPacket::Ptr
         _size--;
         _pkt_buf[_start] = nullptr;
         _pkt_expected_seq = genExpectedSeq(_pkt_expected_seq + 1);
-        _start = (_start + 1) % _pkt_cap;
+        _start = (_start + 1) & _ring_mask;
         it = _pkt_buf[_start];
     }
     while (timeLatency() > _pkt_latency && TLPKTDrop()) {
@@ -279,7 +293,7 @@ bool PacketRecvQueue::inputPacket(DataPacket::Ptr pkt, std::list<DataPacket::Ptr
             _size--;
         }
         _pkt_expected_seq = genExpectedSeq(_pkt_expected_seq + 1);
-        _start = (_start + 1) % _pkt_cap;
+        _start = (_start + 1) & _ring_mask;
     }
     return true;
 }
@@ -335,7 +349,7 @@ std::list<PacketQueueInterface::LostPair> PacketRecvQueue::getLostSeq() {
                 re.push_back(lost);
             }
         }
-        i = (i + 1) % _pkt_cap;
+        i = (i + 1) & _ring_mask;
         steup++;
     }
     return re;
@@ -420,7 +434,7 @@ bool PacketRecvQueue::drop(uint32_t first, uint32_t last, std::list<DataPacket::
     }
 
     for (uint32_t i = 0; i < diff; i++) {
-        auto pos = (i + _start) % _pkt_cap;
+        auto pos = (i + _start) & _ring_mask;
         if (_pkt_buf[pos]) {
             out.push_back(_pkt_buf[pos]);
             _pkt_buf[pos] = nullptr;
@@ -429,7 +443,7 @@ bool PacketRecvQueue::drop(uint32_t first, uint32_t last, std::list<DataPacket::
     }
 
     _pkt_expected_seq = genExpectedSeq(last + 1);
-    _start = (diff + _start) % _pkt_cap;
+    _start = (diff + _start) & _ring_mask;
     if (_size <= 0) {
         _end = _start;
         WarnL;
@@ -438,7 +452,7 @@ bool PacketRecvQueue::drop(uint32_t first, uint32_t last, std::list<DataPacket::
 }
 
 void PacketRecvQueue::insertToCycleBuf(DataPacket::Ptr pkt, uint32_t diff) {
-    auto pos = (_start + diff) % _pkt_cap;
+    auto pos = (_start + diff) & _ring_mask;
 
     if (!_pkt_buf[pos]) {
         _size++;
@@ -449,17 +463,17 @@ void PacketRecvQueue::insertToCycleBuf(DataPacket::Ptr pkt, uint32_t diff) {
     _pkt_buf[pos] = pkt;
 
     if (_start <= _end && pos >= _end) {
-        _end = (pos + 1) % _pkt_cap;
+        _end = (pos + 1) & _ring_mask;
         return;
     }
 
     if (_start <= _end && pos < _start) {
-        _end = (pos + 1) % _pkt_cap;
+        _end = (pos + 1) & _ring_mask;
         return;
     }
 
     if (_start > _end && _end <= pos && _start > pos) {
-        _end = (pos + 1) % _pkt_cap;
+        _end = (pos + 1) & _ring_mask;
         return;
     }
 }
@@ -511,7 +525,7 @@ DataPacket::Ptr PacketRecvQueue::getFirst() {
         if (_pkt_buf[i]) {
             return _pkt_buf[i];
         }
-        i = (i + 1) % _pkt_cap;
+        i = (i + 1) & _ring_mask;
     }
 }
 DataPacket::Ptr PacketRecvQueue::getLast() {
@@ -519,7 +533,8 @@ DataPacket::Ptr PacketRecvQueue::getLast() {
         return nullptr;
     }
     uint32_t steup = 1;
-    uint32_t i = (_end + _pkt_cap - steup) % _pkt_cap;
+    // 防回绕加数须用物理环形容量 _ring_capacity 而非逻辑 _pkt_cap
+    uint32_t i = (_end + _ring_capacity - steup) & _ring_mask;
     /*
     while (1) {
         if (_pkt_buf[i]) {

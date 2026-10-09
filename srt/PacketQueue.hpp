@@ -94,6 +94,10 @@ private:
 
     uint32_t _srt_flag;
 
+    // 物理环形容量 = nextPow2(_pkt_cap)，索引用 & _ring_mask 替代 % _pkt_cap
+    uint32_t _ring_capacity = 0;
+    uint32_t _ring_mask = 0;
+
     std::vector<DataPacket::Ptr> _pkt_buf;
     uint32_t _start = 0;
     uint32_t _end = 0;
