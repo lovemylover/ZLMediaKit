@@ -170,24 +170,39 @@ StrCaseMap &Parser::getUrlArgs() const {
 }
 
 StrCaseMap Parser::parseArgs(const string &str, const char *pair_delim, const char *key_delim) {
+    // 单遍原地扫描，消除split中间vector与多重substr分配
     StrCaseMap ret;
-    auto arg_vec = split(str, pair_delim);
-    for (auto &key_val : arg_vec) {
-        if (key_val.empty()) {
-            // 忽略
-            continue;
+    auto pair_len = strlen(pair_delim);
+    auto key_len = strlen(key_delim);
+    size_t start = 0;
+
+    while (true) {
+        // 查找下一个pair_delim，确定当前参数段[start, end)
+        auto end = str.find(pair_delim, start);
+        if (end == string::npos) {
+            end = str.size();
         }
-        auto pos = key_val.find(key_delim);
-        if (pos != string::npos) {
-            auto key = trim(std::string(key_val, 0, pos));
-            auto val = trim(key_val.substr(pos + strlen(key_delim)));
-            ret.emplace_force(std::move(key), std::move(val));
-        } else {
-            trim(key_val);
-            if (!key_val.empty()) {
-                ret.emplace_force(std::move(key_val), "");
+        // 等价于split的"index - last > 0"：空段跳过
+        if (end > start) {
+            // 在当前参数段内查找key_delim
+            auto pos = str.find(key_delim, start);
+            if (pos != string::npos && pos < end) {
+                // key = trim(str[start, pos)), val = trim(str[pos+key_len, end))
+                auto key = trim(str.substr(start, pos - start));
+                auto val = trim(str.substr(pos + key_len, end - pos - key_len));
+                ret.emplace_force(std::move(key), std::move(val));
+            } else {
+                // 无key_delim，整段作key
+                auto key = trim(str.substr(start, end - start));
+                if (!key.empty()) {
+                    ret.emplace_force(std::move(key), "");
+                }
             }
         }
+        if (end >= str.size()) {
+            break;
+        }
+        start = end + pair_len;
     }
     return ret;
 }
