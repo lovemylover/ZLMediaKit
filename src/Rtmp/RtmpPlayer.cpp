@@ -128,6 +128,7 @@ void RtmpPlayer::onPlayResult_l(const SockException &ex, bool handshake_done) {
         // 播放成功，恢复rtmp接收超时定时器  [AUTO-TRANSLATED:29b58110]
         // After successful playback, restore the rtmp receive timeout timer
         _rtmp_recv_ticker.resetTime();
+        _rtmp_recv_ticker_cnt = 0;
         auto timeout_ms = (*this)[Client::kMediaTimeoutMS].as<uint64_t>();
         weak_ptr<RtmpPlayer> weak_self = static_pointer_cast<RtmpPlayer>(shared_from_this());
         auto lam = [weak_self, timeout_ms]() {
@@ -352,7 +353,11 @@ void RtmpPlayer::onStreamDry(uint32_t stream_index) {
 }
 
 void RtmpPlayer::onMediaData_l(RtmpPacket::Ptr chunk_data) {
-    _rtmp_recv_ticker.resetTime();
+    // 与RtspPlayer::onRtpSorted同构的64包计数节流：ticker仅被onPlayResult_l中
+    // timeout_ms/2000周期定时器读取，64包最坏判定延迟(25fps≈2.56s)远小于超时阈值(默认10s)
+    if ((++_rtmp_recv_ticker_cnt & 0x3F) == 0) {
+        _rtmp_recv_ticker.resetTime();
+    }
     if (!_play_timer) {
         // 已经触发了onPlayResult事件，直接触发onMediaData事件  [AUTO-TRANSLATED:5c12bd46]
         // The onPlayResult event has been triggered, directly trigger the onMediaData event

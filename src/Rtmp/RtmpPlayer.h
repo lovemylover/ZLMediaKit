@@ -104,6 +104,7 @@ private:
     // rtmp接收超时计时器  [AUTO-TRANSLATED:292af22c]
     // Rtmp receive timeout timer
     toolkit::Ticker _rtmp_recv_ticker;
+    uint32_t _rtmp_recv_ticker_cnt = 0;
     // 心跳发送定时器  [AUTO-TRANSLATED:04ac8e65]
     // Heartbeat send timer
     std::shared_ptr<toolkit::Timer> _beat_timer;
