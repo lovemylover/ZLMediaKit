@@ -410,7 +410,8 @@ void RtmpPlayer::onRtmpChunk(RtmpPacket::Ptr packet) {
         case MSG_AUDIO:
         case MSG_VIDEO: {
             auto idx = chunk_data.type_id % 2;
-            if (_now_stamp_ticker[idx].elapsedTime() > 500) {
+            // 8帧计数节流：判定粒度(25fps约320ms)不超过原500ms阈值，进度更新语义等价
+            if ((++_now_stamp_ticker_cnt[idx] & 0x07) == 0 && _now_stamp_ticker[idx].elapsedTime() > 500) {
                 // 计算播放进度时间轴用  [AUTO-TRANSLATED:383fd62c]
                 // Used to calculate the playback progress timeline
                 _now_stamp[idx] = chunk_data.time_stamp;
