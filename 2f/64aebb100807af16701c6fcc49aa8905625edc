@@ -1,0 +1,23 @@
+src/Extension/Frame.h
+  s_ef85f98f3a787b::t_5181a7df923624 599-600
+src/Record/MP4Demuxer.cpp
+  s_ef85f98f3a787b::t_2340ea0cabe9e1 253-254
+src/Extension/Frame.cpp
+  s_ef85f98f3a787b::t_436bf703fa705d 64-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "2f64aebb100807af16701c6fcc49aa8905625edc",
+  "prompts": {},
+  "sessions": {
+    "s_ef85f98f3a787b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "69bad4b0-d67a-4ea3-803b-5e463a33a88d",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
