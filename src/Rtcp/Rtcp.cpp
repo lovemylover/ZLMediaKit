@@ -276,7 +276,7 @@ std::shared_ptr<RtcpSR> RtcpSR::create(size_t item_count) {
 string RtcpSR::getNtpStamp() const {
     struct timeval tv;
     tv.tv_sec = ntpmsw - 0x83AA7E80;
-    tv.tv_usec = (decltype(tv.tv_usec))(ntplsw / ((double)(((uint64_t)1) << 32) * 1.0e-6));
+    tv.tv_usec = (decltype(tv.tv_usec))((uint64_t)ntplsw * 1000000ULL >> 32);
     return LogChannel::printTime(tv);
 }
 
@@ -290,13 +290,13 @@ uint64_t RtcpSR::getNtpUnixStampMS() const {
     }
     struct timeval tv;
     tv.tv_sec = ntpmsw - 0x83AA7E80;
-    tv.tv_usec = (decltype(tv.tv_usec))(ntplsw / ((double)(((uint64_t)1) << 32) * 1.0e-6));
+    tv.tv_usec = (decltype(tv.tv_usec))((uint64_t)ntplsw * 1000000ULL >> 32);
     return (uint64_t)1000 * tv.tv_sec + tv.tv_usec / 1000;
 }
 
 void RtcpSR::setNtpStamp(struct timeval tv) {
     ntpmsw = htonl(tv.tv_sec + 0x83AA7E80); /* 0x83AA7E80 is the number of seconds from 1900 to 1970 */
-    ntplsw = htonl((uint32_t)((double)tv.tv_usec * (double)(((uint64_t)1) << 32) * 1.0e-6));
+    ntplsw = htonl((uint32_t)(((uint64_t)tv.tv_usec << 32) / 1000000ULL));
 }
 
 void RtcpSR::setNtpStamp(uint64_t unix_stamp_ms) {
