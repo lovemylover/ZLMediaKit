@@ -264,8 +264,8 @@ public:
     int _pt = 0xff;
     int _channel = 0;
     int _samplerate = 0;
-    // RTP时间戳→毫秒换算因子，sample_rate固定时一次性计算，消除每包整数除法
-    double _ms_per_tick = 0;
+    // RTP时间戳→毫秒定点换算因子(2^32 Q32定点)，预计算消除每包double乘法
+    uint64_t _ms_factor = 0;
     TrackType _type;
     std::string _codec;
     std::string _fmtp;

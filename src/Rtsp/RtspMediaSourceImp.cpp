@@ -8,7 +8,7 @@ void RtspMediaSource::setSdp(const std::string &sdp) {
     _tracks[TrackAudio] = sdp_parser.getTrack(TrackAudio);
     for (auto &track : _tracks) {
         if (track) {
-            track->_ms_per_tick = track->_samplerate ? 1000.0 / track->_samplerate : 0;
+            track->_ms_factor = track->_samplerate ? (uint64_t)((1000.0 * (double)(1ULL << 32)) / track->_samplerate + 0.5) : 0;
         }
     }
     _have_video = (bool)_tracks[TrackVideo];
@@ -63,7 +63,7 @@ void RtspMediaSource::onWrite(RtpPacket::Ptr rtp, bool keyPos) {
     // 音频总是更新，视频在关键包时更新
     if (track && ((keyPos && _have_video && is_video) || (!is_video))) {
         track->_seq = rtp->getSeq();
-        track->_time_stamp = static_cast<uint32_t>(rtp->getStamp() * track->_ms_per_tick);
+        track->_time_stamp = static_cast<uint32_t>((static_cast<uint64_t>(rtp->getStamp()) * track->_ms_factor) >> 32);
         track->_ssrc = rtp->getSSRC();
     }
     if (!_ring) {
