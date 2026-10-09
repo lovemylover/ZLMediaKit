@@ -1260,6 +1260,11 @@ void RtspSession::updateRtcpContext(const RtpPacket::Ptr &rtp){
 
     auto &ticker = _rtcp_send_tickers[track_index];
     //send rtcp every 5 second
+    // 首次 SR 不节流（播放端 PLAY 后需立即发 SR 供播放器同步音视频）；非首次 64 包计数节流
+    // 25fps 视频 64 包约 2.56s，音频约 1.28s，远小于 5s 阈值
+    if (!(_send_sr_rtcp[track_index] && !_push_src) && (++_rtcp_send_cnt[track_index] & 0x3F) != 0) {
+        return;
+    }
     if (ticker.elapsedTime() > 5 * 1000 || (_send_sr_rtcp[track_index] && !_push_src)) {
         //确保在发送rtp前，先发送一次sender report rtcp(用于播放器同步音视频)
         ticker.resetTime();

@@ -305,6 +305,8 @@ private:
     // rtcp发送时间,trackid idx 为数组下标  [AUTO-TRANSLATED:bf3248b1]
     // RTCP send time, trackid idx is the array index
     toolkit::Ticker _rtcp_send_tickers[2];
+    // RTCP 发送 ticker 节流计数，与 _alive_ticker_cnt 同构 (0x3F 掩码)
+    uint32_t _rtcp_send_cnt[2] = {0, 0};
     // 统计rtp并发送rtcp  [AUTO-TRANSLATED:0ac2b665]
     // Count RTP and send RTCP
     std::vector<RtcpContext::Ptr> _rtcp_context;
