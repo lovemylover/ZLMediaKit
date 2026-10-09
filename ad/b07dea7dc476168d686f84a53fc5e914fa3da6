@@ -1,0 +1,32 @@
+srt/PacketQueue.hpp
+  s_0a3cc412afbaad::t_60ecfd50ff92cc 97-100
+srt/PacketQueue.cpp
+  s_0a3cc412afbaad::t_f09b88ef03516e 273
+  s_0a3cc412afbaad::t_6cb4de4c49e126 446
+  s_0a3cc412afbaad::t_93dc1861cbbb1e 455
+  s_0a3cc412afbaad::t_c2255351cb7bfb 296
+  s_0a3cc412afbaad::t_53ea6e9af29108 437
+  s_0a3cc412afbaad::t_ed3430937439ca 352
+  s_0a3cc412afbaad::t_74cac403538008 466,471,476
+  s_0a3cc412afbaad::t_b8899d367fd369 528
+  s_0a3cc412afbaad::t_8e27453d8056c0 536-537
+  s_0a3cc412afbaad::t_60ce153b5b51ed 5-16
+  s_0a3cc412afbaad::t_de948232671c4c 258-260
+  s_0a3cc412afbaad::t_34f75da1be06de 285
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "adb07dea7dc476168d686f84a53fc5e914fa3da6",
+  "prompts": {},
+  "sessions": {
+    "s_0a3cc412afbaad": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "63277e86-f4ad-4f87-bd39-6604c4602e6f",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
