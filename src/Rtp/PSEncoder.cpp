@@ -14,10 +14,37 @@
 #include "Common/config.h"
 #include "Extension/CommonRtp.h"
 #include "Rtsp/RtspMuxer.h"
+#include "Util/onceToken.h"
 
 using namespace toolkit;
 
 namespace mediakit{
+
+// 池化对象引用计数归零自动回收复用，消除每次 PS/TS 输出块的堆分配
+class PooledFrameFromPtr : public FrameFromPtr {
+public:
+    using Ptr = std::shared_ptr<PooledFrameFromPtr>;
+
+    static Ptr create(CodecId codec_id, char *ptr, size_t size, uint64_t dts, uint64_t pts, size_t prefix_size, bool is_key) {
+        static ResourcePool<PooledFrameFromPtr> packet_pool;
+        static onceToken token([]() {
+            packet_pool.setSize(64);
+        });
+        auto ret = packet_pool.obtain2();
+        ret->_ptr = ptr;
+        ret->_size = size;
+        ret->_dts = dts;
+        ret->_pts = pts;
+        ret->_prefix_size = prefix_size;
+        ret->_is_key = is_key;
+        ret->_codec_id = codec_id;
+        return ret;
+    }
+
+private:
+    friend class ResourcePool_l<PooledFrameFromPtr>;
+    PooledFrameFromPtr() = default;
+};
 
 PSEncoderImp::PSEncoderImp(uint32_t ssrc, uint8_t payload_type, bool ps_or_ts) : MpegMuxer(ps_or_ts) {
     GET_CONFIG(uint32_t, s_video_mtu, Rtp::kVideoMtuSize);
@@ -46,7 +73,7 @@ void PSEncoderImp::onWrite(std::shared_ptr<Buffer> buffer, uint64_t stamp, bool 
     if (!buffer) {
         return;
     }
-    _rtp_encoder->inputFrame(std::make_shared<FrameFromPtr>(CodecH264/*只用于识别为视频*/, buffer->data(), buffer->size(), stamp, stamp, 0, key_pos));
+    _rtp_encoder->inputFrame(PooledFrameFromPtr::create(CodecH264/*只用于识别为视频*/, buffer->data(), buffer->size(), stamp, stamp, 0, key_pos));
 }
 
 }//namespace mediakit
