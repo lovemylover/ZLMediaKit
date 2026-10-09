@@ -1,0 +1,23 @@
+src/Rtsp/RtpReceiver.cpp
+  s_49a169fde9d6c8::t_934784c40f0d22 28
+  s_49a169fde9d6c8::t_b197b1e7115665 93
+  s_49a169fde9d6c8::t_e032dc0b1a2637 78-81
+src/Rtsp/RtpReceiver.h
+  s_49a169fde9d6c8::t_6ea1caa40af96b 272-273
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "630479b1cf8f90fef401c8bec4eb5b37131f35c9",
+  "prompts": {},
+  "sessions": {
+    "s_49a169fde9d6c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d23f0b3-4677-46a3-9bad-8e352b689461",
+        "model": "glm-5.2"
+      },
+      "human_author": "波儿与傲天 <oncwnuKk9-5XKqllib125Sk_K4Hg@git.weixin.qq.com>"
+    }
+  }
+}
