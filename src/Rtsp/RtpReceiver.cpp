@@ -25,6 +25,7 @@ uint32_t RtpTrack::getSSRC() const {
 
 void RtpTrack::clear() {
     _ssrc = 0;
+    _ssrc_alive_cnt = 0;
     _ssrc_alive.resetTime();
     PacketSortor<RtpPacket::Ptr>::clear();
 }
@@ -74,7 +75,10 @@ RtpPacket::Ptr RtpTrack::inputRtp(TrackType type, int sample_rate, uint8_t *ptr,
     } else if (_ssrc == ssrc) {
         // ssrc匹配正确,刷新计时器  [AUTO-TRANSLATED:266518e6]
         // SSRC matches correctly, refresh timer
-        _ssrc_alive.resetTime();
+        // 64包计数节流，与 RtpSession::onRtpPacket / WebRtcTransport::onRtpSecurity 同构
+        if ((++_ssrc_alive_cnt & 0x3F) == 0) {
+            _ssrc_alive.resetTime();
+        }
     } else {
         // ssrc错误  [AUTO-TRANSLATED:b967d497]
         // SSRC error
@@ -86,6 +90,7 @@ RtpPacket::Ptr RtpTrack::inputRtp(TrackType type, int sample_rate, uint8_t *ptr,
         }
         InfoL << "rtp ssrc changed:" << _ssrc << " -> " << ssrc;
         _ssrc = ssrc;
+        _ssrc_alive_cnt = 0;
         _ssrc_alive.resetTime();
     }
 

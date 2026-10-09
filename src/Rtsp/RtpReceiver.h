@@ -269,6 +269,8 @@ private:
     uint8_t _pt = 0xFF;
     uint32_t _ssrc = 0;
     toolkit::Ticker _ssrc_alive;
+    // ssrc 匹配热路径 resetTime 节流计数，与 RtpSession/WebRtcTransport 同构 (0x3F 掩码)
+    uint32_t _ssrc_alive_cnt = 0;
     NtpStamp _ntp_stamp;
     // 换算因子缓存的采样率，用于检测sample_rate变化
     // The sample rate cached by the conversion factor, used to detect sample_rate changes
