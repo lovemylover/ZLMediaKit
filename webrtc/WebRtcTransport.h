@@ -253,6 +253,8 @@ private:
 
     //超时功能实现
     toolkit::Ticker _recv_ticker;
+    // RTP接收计数器，每64包才resetTime一次，避免每包vDSO gettimeofday开销
+    uint32_t _recv_pkt_cnt = 0;
     std::shared_ptr<toolkit::Timer> _check_timer;
     std::function<void()> _on_start;
     std::function<void(const toolkit::SockException &ex)> _on_shutdown;

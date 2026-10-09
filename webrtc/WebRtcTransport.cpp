@@ -751,13 +751,15 @@ void WebRtcTransport::inputSockData(const char *buf, int len, const SocketHelper
 }
 
 void WebRtcTransport::inputSockData(const char *buf, int len, const IceTransport::Pair::Ptr& pair) {
-    // DebugL;
-    _recv_ticker.resetTime();
     if (_ice_agent->processSocketData((const uint8_t *)buf, len, pair)) {
+        // STUN保活包，每包刷新
+        _recv_ticker.resetTime();
         return;
     }
     if (isDtls(buf)) {
         _dtls_transport->ProcessDtlsData((uint8_t *)buf, len);
+        // DTLS低频包，每包刷新
+        _recv_ticker.resetTime();
         return;
     }
     if (isRtp(buf, len)) {
@@ -766,6 +768,10 @@ void WebRtcTransport::inputSockData(const char *buf, int len, const IceTransport
             return;
         }
         if (_srtp_session_recv->DecryptSrtp((uint8_t *)buf, &len)) {
+            // RTP媒体包64包节流，超时检测周期7.5s远大于64包延迟
+            if ((++_recv_pkt_cnt & 0x3F) == 0) {
+                _recv_ticker.resetTime();
+            }
             onRtp(buf, len, _ticker.createdTime());
         }
         return;
@@ -776,6 +782,8 @@ void WebRtcTransport::inputSockData(const char *buf, int len, const IceTransport
             return;
         }
         if (_srtp_session_recv->DecryptSrtcp((uint8_t *)buf, &len)) {
+            // RTCP保活包，每包刷新
+            _recv_ticker.resetTime();
             onRtcp(buf, len);
         }
         return;
